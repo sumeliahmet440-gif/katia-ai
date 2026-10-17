@@ -12,7 +12,7 @@ app.post('/api/chat', async (req, res) => {
     const r = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + process.env.GROQ_API_KEY },
-      body: JSON.stringify({ model: 'gemma2-9b-it', messages, temperature: 0.7, max_tokens: 500 })
+      body: JSON.stringify({ model: 'llama-3.1-8b-instant', messages, temperature: 0.7, max_tokens: 500 })
     });
     const d = await r.json();
     if (!r.ok) return res.status(r.status).json({ error: (d.error && d.error.message) || 'Groq hatası' });
