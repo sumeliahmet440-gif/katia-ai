@@ -1,63 +1,203 @@
 const express = require('express');
+const { createCore, autoStore, PERSONAS } = require('./lekocore');
+const core = createCore(autoStore());
 const path = require('path');
+const dns = require('dns').promises;
+const net = require('net');
 const app = express();
+app.set('trust proxy', 1);
 
-app.use(express.json({ limit: '1mb' }));
-app.use(express.static(path.join(__dirname, 'public'), { dotfiles: 'allow' }));
+app.disable('x-powered-by');
+app.use(express.json({ limit: '15mb' }));
+// Tüm dosyalar aynı klasörde: sunucu/paket dosyalarını dışarı verme
+app.use((req, res, next) => {
+  if (/^\/(server\.js|package(-lock)?\.json|readme\.md|groq\.key|lekocore\.js|data(\/|$)|db\.json|node_modules|\.env|\.git)/i.test(req.path)) return res.status(404).end();
+  next();
+});
+app.use(express.static(__dirname, { dotfiles: 'allow', index: 'index.html' }));
 
+/* ---------------------------------------------------------------
+   /api/relay  — tarayıcı bir yapay zeka servisine doğrudan
+   ulaşamazsa (CORS engeli) isteği buradan geçirir.
+   API anahtarı kullanıcının kendi cihazından gelir, burada SAKLANMAZ.
+   --------------------------------------------------------------- */
+function isPrivateIp(ip) {
+  if (net.isIPv4(ip)) {
+    const [a, b] = ip.split('.').map(Number);
+    return a === 10 || a === 127 || a === 0 || (a === 169 && b === 254) ||
+      (a === 172 && b >= 16 && b <= 31) || (a === 192 && b === 168) || (a === 100 && b >= 64 && b <= 127);
+  }
+  const l = ip.toLowerCase();
+  return l === '::1' || l === '::' || l.startsWith('fc') || l.startsWith('fd') || l.startsWith('fe80') || l.startsWith('::ffff:');
+}
+
+const hits = new Map(); // basit hız sınırı: IP başına dakikada 60 istek
+setInterval(() => hits.clear(), 60 * 1000).unref();
+
+const APP_ORIGINS = ['https://localhost', 'http://localhost', 'capacitor://localhost', 'file://', 'null'];
+app.options('/api/relay', (req, res) => {
+  const o = req.headers.origin;
+  if (o && (APP_ORIGINS.includes(o) || (process.env.ALLOWED_ORIGINS || '').split(',').includes(o))) {
+    res.set({ 'Access-Control-Allow-Origin': o, 'Access-Control-Allow-Methods': 'POST, OPTIONS', 'Access-Control-Allow-Headers': 'Content-Type', 'Vary': 'Origin' });
+  }
+  res.status(204).end();
+});
+
+app.post('/api/relay', async (req, res) => {
+  try {
+    const ip = req.ip || '?';
+    const n = (hits.get(ip) || 0) + 1;
+    hits.set(ip, n);
+    if (n > 60) return res.status(429).json({ error: { message: 'Çok fazla istek. Biraz bekle.' } });
+
+    // Sadece kendi sitenden gelen istekleri kabul et (başka siteler relay'i kullanamasın)
+    const origin = req.headers.origin;
+    if (origin) {
+      let oh = '';
+      try { oh = new URL(origin).host; } catch (e) {}
+      const okApp = APP_ORIGINS.includes(origin) || (process.env.ALLOWED_ORIGINS || '').split(',').includes(origin);
+      if (okApp) res.set({ 'Access-Control-Allow-Origin': origin, 'Vary': 'Origin' });
+      else if (oh !== req.headers.host) return res.status(403).json({ error: { message: 'İzin verilmeyen kaynak.' } });
+    }
+
+    const { url, headers, body } = req.body || {};
+    let u;
+    try { u = new URL(url); } catch (e) { return res.status(400).json({ error: { message: 'Geçersiz adres.' } }); }
+    if (u.protocol !== 'https:') return res.status(400).json({ error: { message: 'Sadece https adreslerine izin var.' } });
+
+    // Yerel / özel ağ adreslerini engelle (SSRF koruması)
+    const host = u.hostname;
+    const addrs = net.isIP(host) ? [{ address: host }] : await dns.lookup(host, { all: true });
+    if (!addrs.length || addrs.some(a => isPrivateIp(a.address)))
+      return res.status(400).json({ error: { message: 'Bu adrese erişim engellendi.' } });
+
+    const h = {};
+    for (const [k, v] of Object.entries(headers || {})) {
+      if (/^(host|content-length|connection|origin|referer|cookie)$/i.test(k)) continue;
+      h[k] = String(v);
+    }
+    const ctl = new AbortController();
+    const to = setTimeout(() => ctl.abort(), 90 * 1000);
+    const r = await fetch(u.toString(), { method: 'POST', headers: h, body: typeof body === 'string' ? body : JSON.stringify(body), signal: ctl.signal, redirect: 'error' });
+    clearTimeout(to);
+    const text = await r.text();
+    res.status(r.status).type(r.headers.get('content-type') || 'application/json').send(text);
+  } catch (e) {
+    res.status(502).json({ error: { message: 'Sunucu bağlantı hatası: ' + e.message } });
+  }
+});
+
+
+/* ---------------------------------------------------------------
+   Hazır anahtar: Katia / Ayaz / Horror modları (GROQ_API_KEY sadece sunucuda durur)
+   --------------------------------------------------------------- */
 const GROQ = 'https://api.groq.com/openai/v1';
-const PREFERRED = [
-  process.env.GROQ_MODEL,
-  'llama-3.3-70b-versatile',
-  'llama-3.1-8b-instant',
-  'openai/gpt-oss-20b',
-  'openai/gpt-oss-120b'
-].filter(Boolean);
-
-let cache = { at: 0, ids: [] };
-async function availableModels() {
-  if (Date.now() - cache.at < 10 * 60 * 1000 && cache.ids.length) return cache.ids;
-  const r = await fetch(GROQ + '/models', {
-    headers: { Authorization: 'Bearer ' + process.env.GROQ_API_KEY }
-  });
-  const d = await r.json();
-  if (!r.ok) throw new Error((d.error && d.error.message) || 'Model listesi alınamadı');
-  cache = {
-    at: Date.now(),
-    ids: d.data
-      .filter(m => m.active !== false)
-      .map(m => m.id)
-      .filter(id => !/whisper|guard|tts|orpheus|embed/i.test(id))
-  };
-  return cache.ids;
+const fs = require('fs');
+// Anahtarı temizle: tırnak, boşluk, satır sonu, "Bearer " ve "GROQ_API_KEY=" önekini at
+const cleanKey = v => String(v || '').replace(/ı/g, 'i').replace(/İ/g, 'I').replace(/[^\x21-\x7E]/g, '').trim().replace(/^(export\s+)?(GROQ_API_KEY|GROQ_KEY)\s*=\s*/i, '').replace(/^Bearer\s+/i, '').replace(/^["']+|["']+$/g, '').replace(/\s+/g, '');
+// Sırayla dener: Render ortam değişkeni (birkaç olası ad) -> groq.key dosyası (isteğe bağlı, GitHub'a koyma)
+function groqKey() {
+  for (const n of ['GROQ_API_KEY', 'GROQ_KEY', 'GROQ_APIKEY', 'GROQ', 'GROQ_TOKEN']) {
+    const k = cleanKey(process.env[n]); if (k) return k;
+  }
+  try { const k = cleanKey(fs.readFileSync(path.join(__dirname, 'groq.key'), 'utf8')); if (k) return k; } catch (e) {}
+  return '';
 }
-
-async function pickModel(requested) {
-  const ids = await availableModels();
-  if (requested && ids.includes(requested)) return requested;
-  return PREFERRED.find(m => ids.includes(m)) || ids[0];
+const BUILTIN = PERSONAS; // tüm modlar sunucudaki hazır anahtarı kullanır
+const lastOk = { t: '', v: '' }; // son çalışan Groq modelleri
+const hits2 = new Map();
+setInterval(() => hits2.clear(), 60 * 1000).unref();
+const okOrigin = o => APP_ORIGINS.includes(o) || (process.env.ALLOWED_ORIGINS || '').split(',').includes(o);
+function guard(req, res, limit, map) {
+  map = map || hits2;
+  const n = (map.get(req.ip) || 0) + 1; map.set(req.ip, n);
+  const o = req.headers.origin;
+  if (o) {
+    let oh = ''; try { oh = new URL(o).host; } catch (e) {}
+    if (okOrigin(o)) res.set({ 'Access-Control-Allow-Origin': o, 'Vary': 'Origin' });
+    else if (oh !== req.headers.host) { res.status(403).json({ error: { message: 'İzin verilmeyen kaynak.' } }); return false; }
+  }
+  if (n > limit) { res.status(429).json({ error: { message: 'Çok fazla istek. Biraz bekle.' } }); return false; }
+  return true;
 }
+const preflight = (req, res) => {
+  const o = req.headers.origin;
+  if (o && okOrigin(o)) res.set({ 'Access-Control-Allow-Origin': o, 'Access-Control-Allow-Methods': 'POST, OPTIONS', 'Access-Control-Allow-Headers': 'Content-Type, x-groq-key, x-did', 'Vary': 'Origin' });
+  res.status(204).end();
+};
+app.options('/api/chat', preflight);
+app.options('/api/stt', preflight);
+app.options('/api/k/*', preflight);
+
+// Hesap / Leko yönetimi (isim, ban, ayar)
+const hitsK = new Map(); setInterval(() => hitsK.clear(), 60 * 1000).unref();
+app.post('/api/k/*', async (req, res) => {
+  try {
+    if (!guard(req, res, 150, hitsK)) return;
+    const r = await core.handle(String(req.params[0] || ''), req.body, req.ip);
+    res.status(r.status).json(r.body);
+  } catch (e) { res.status(503).json({ error: { message: 'Veritabanı hatası: ' + e.message } }); }
+});
 
 app.post('/api/chat', async (req, res) => {
   try {
-    if (!process.env.GROQ_API_KEY)
-      return res.status(500).json({ error: 'GROQ_API_KEY Render ortam değişkenlerine eklenmemiş.' });
-    const { messages, model } = req.body;
-    const chosen = await pickModel(model);
-    if (!chosen) return res.status(500).json({ error: 'Kullanılabilir model bulunamadı.' });
-
-    const r = await fetch(GROQ + '/chat/completions', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + process.env.GROQ_API_KEY },
-      body: JSON.stringify({ model: chosen, messages, temperature: 0.7, max_tokens: 500 })
-    });
-    const d = await r.json();
-    if (!r.ok) {
-      cache.at = 0; // sonraki istekte model listesini yenile
-      return res.status(r.status).json({ error: (d.error && d.error.message) || 'Groq hatası' });
+    if (!guard(req, res, 40)) return;
+    const key = groqKey();
+    if (!key) return res.status(503).json({ error: { message: 'Sunucuda GROQ_API_KEY tanımlı değil. Render > Environment bölümüne ekle.' } });
+    const b = req.body || {};
+    if (!BUILTIN.includes(b.persona)) return res.status(403).json({ error: { message: 'Bu mod için hazır anahtar yok. Ayarlardan kendi API anahtarını gir.' } });
+    const gt = await core.gate(req.headers['x-did'], b.persona);
+    if (!gt.ok) return res.status(gt.status).json({ error: { message: gt.message } });
+    const msgs = (Array.isArray(b.msgs) ? b.msgs : []).slice(-30).map(m => ({ role: m.role === 'assistant' ? 'assistant' : 'user', content: String(m.content || '').slice(0, 4000) }));
+    if (!msgs.length) return res.status(400).json({ error: { message: 'Mesaj yok.' } });
+    const img = typeof b.img === 'string' && b.img.startsWith('data:image/') ? b.img : null;
+    if (img) { const l = msgs[msgs.length - 1]; l.content = [{ type: 'text', text: l.content }, { type: 'image_url', image_url: { url: img } }]; }
+    const cands = img
+      ? [process.env.GROQ_VISION_MODEL, lastOk.v, 'qwen/qwen3.8-27b', 'meta-llama/llama-4-maverick-17b-128e-instruct']
+      : [process.env.GROQ_MODEL, lastOk.t, 'openai/gpt-oss-120b', 'openai/gpt-oss-20b', 'llama-3.1-8b-instant'];
+    const list = cands.filter((m, i, a) => m && a.indexOf(m) === i);
+    const msgsOut = [{ role: 'system', content: String(b.sys || '').slice(0, 6000) }, ...msgs];
+    const temp = Math.min(1.5, Math.max(0, +b.temp || 0.7)), max = Math.min(1200, Math.max(30, +b.max || 300));
+    let last = null;
+    for (const model of list) {
+      const body = { model, messages: msgsOut, temperature: temp, max_tokens: /gpt-oss/.test(model) ? max * 3 + 200 : max };
+      if (/gpt-oss/.test(model)) body.reasoning_effort = 'low';
+      const r = await fetch(GROQ + '/chat/completions', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + key }, body: JSON.stringify(body) });
+      const txt = await r.text();
+      if (r.status === 401) return res.status(401).json({ error: { message: 'Sunucudaki Groq anahtarı geçersiz. console.groq.com/keys adresinden yeni anahtar alıp Render > Environment > GROQ_API_KEY değerini güncelle.' } });
+      if (r.ok) { lastOk[img ? 'v' : 't'] = model; return res.status(200).type('application/json').send(txt); }
+      last = { status: r.status, txt };
+      if (!(r.status === 404 || r.status === 400)) break; // model hatası değilse (429 vb.) diğer modeli deneme
     }
-    res.json({ reply: d.choices[0].message.content, model: chosen });
-  } catch (e) { res.status(500).json({ error: e.message }); }
+    res.status(last ? last.status : 502).type('application/json').send(last ? last.txt : JSON.stringify({ error: { message: 'Groq modeli bulunamadı.' } }));
+  } catch (e) { res.status(502).json({ error: { message: 'Sunucu hatası: ' + e.message } }); }
 });
+
+// Ses -> metin (iOS / Android WebView / Firefox için). Whisper, Groq üzerinden.
+app.post('/api/stt', express.raw({ type: () => true, limit: '10mb' }), async (req, res) => {
+  try {
+    if (!guard(req, res, 60)) return;
+    const gt = await core.gate(req.headers['x-did'], '');
+    if (!gt.ok) return res.status(gt.status).json({ error: { message: gt.message } });
+    const key = cleanKey(req.headers['x-groq-key']) || groqKey();
+    if (!key) return res.status(503).json({ error: { message: 'GROQ_API_KEY yok.' } });
+    if (!Buffer.isBuffer(req.body) || !req.body.length) return res.status(400).json({ error: { message: 'Ses yok.' } });
+    const ct = String(req.headers['content-type'] || 'audio/webm').split(';')[0];
+    const ext = /mp4|m4a|aac/.test(ct) ? 'm4a' : /ogg/.test(ct) ? 'ogg' : /wav/.test(ct) ? 'wav' : 'webm';
+    const fd = new FormData();
+    fd.append('file', new Blob([req.body], { type: ct }), 'ses.' + ext);
+    fd.append('model', 'whisper-large-v3-turbo');
+    fd.append('language', String(req.query.lang || 'tr').slice(0, 2));
+    fd.append('temperature', '0');
+    const r = await fetch(GROQ + '/audio/transcriptions', { method: 'POST', headers: { Authorization: 'Bearer ' + key }, body: fd });
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok) return res.status(r.status).json(j);
+    res.json({ text: (j.text || '').trim() });
+  } catch (e) { res.status(502).json({ error: { message: 'Ses tanıma hatası: ' + e.message } }); }
+});
+
+app.get('/healthz', (_req, res) => res.send('ok'));
+// Anahtar sunucuda görünüyor mu? (anahtarın kendisi gösterilmez)
+app.get('/api/durum', (_req, res) => { const k = groqKey(); res.json({ groq: !!k, uzunluk: k.length, gsk: k.startsWith('gsk_'), ...core.info() }); });
 
 app.listen(process.env.PORT || 3000, () => console.log('Katia çalışıyor'));
