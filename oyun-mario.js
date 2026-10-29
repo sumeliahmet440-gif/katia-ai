@@ -21,9 +21,13 @@ window.startLekoBros = function (host, onExit, startLevel, opts) {
   const xT = [];
   const kd = e => {
     if (editOpen) return; // düzenleme panelinde yazı yazılabilsin
-    if ((e.key === 'x' || e.key === 'X') && !e.repeat) { // 3 kez hızlıca X: düzenleme modu (sadece Leko modu açıkken)
+    if ((e.key === 'x' || e.key === 'X' || e.code === 'KeyX') && !e.repeat) { // 3 kez hızlıca X: düzenleme modu (sadece Leko modu açıkken)
       const now = Date.now(); xT.push(now); while (xT.length > 3) xT.shift();
-      if (xT.length === 3 && now - xT[0] < 1600 && window.lekoEditAllowed && window.lekoEditAllowed()) { xT.length = 0; openEdit(); e.preventDefault(); e.stopPropagation(); return; }
+      if (xT.length === 3 && now - xT[0] < 2200) {
+        xT.length = 0;
+        if (window.lekoEditAllowed && window.lekoEditAllowed()) { openEdit(); e.preventDefault(); e.stopPropagation(); return; }
+        hintT = 180; // yetki yok: nedenini göster
+      }
     }
     const k = KM[e.key];
     if (k) { keys[k] = true; e.preventDefault(); e.stopPropagation(); }
@@ -361,7 +365,7 @@ window.startLekoBros = function (host, onExit, startLevel, opts) {
   let boss = null, bossMsg = 0, bossTxt = '', gateList = [], bshots = [], arenaPows = [], cp = 0, ARS = 0;
   const ARENA = 46;
   const cfgNow = () => ((window.LEKO_GCFG || {})[lv + 1]) || {}; // Leko düzenleme modundan gelen bölüm ayarları (herkese yansır)
-  let paused = false, editOpen = false;
+  let paused = false, editOpen = false, hintT = 0;
   let items = [], fireballs = [], parts = [], pw = 0, keepPw = 0, inv = 0; // pw: 0 küçük · 1 büyük · 2 ateş
   let lv = Math.max(0, Math.min(LEVELS.length - 1, (startLevel | 0) - 1));
   let COLS = 150, FLAGX = 0, th = TH.day, introT = 0, endT = 0, lsScore = 0, lsCoins = 0;
@@ -369,16 +373,16 @@ window.startLekoBros = function (host, onExit, startLevel, opts) {
   function makeArena(L) {
     const n = lv + 1, final = n === LEVELS.length, gx = COLS - 12, ax = L.cols + 6;
     const put = (x, y, t) => { if (x >= 0 && x < COLS && y >= 0 && y < ROWS) map[y][x] = t; };
-    for (let x = L.cols; x < COLS; x++) { put(x, 10, 1); put(x, 11, 1); for (let r = 0; r < 10; r++) put(x, r, 0); }
+    for (let x = L.cols; x < COLS; x++) { if (final) { put(x, 10, 7); put(x, 11, 0); } else { put(x, 10, 1); put(x, 11, 1); } for (let r = 0; r < 10; r++) put(x, r, 0); } // final: lav üstünde köprü
     for (let r = 2; r <= 9; r++) { put(gx, r, 4); gateList.push([gx, r]); }
     const pp = final ? [8, 12, 16, 20] : [9, 14, 19]; // güç blokları (boss ilerledikçe yenilenir)
     pp.forEach((o, k) => { put(ax + o, 6, 8); arenaPows.push([ax + o, 6]); });
     const pat = ['walk', 'fire']; if (n >= 6) pat.push('stomp'); if (n >= 11) pat.push('summon'); if (n >= 16) pat.push('rain'); if (n >= 21) pat.push('dash');
     if (L.fake) { pat.length = 0; pat.push('walk', 'fire', 'stomp', 'summon'); }
-    const sz = final ? 0 : 30 + Math.min(8, Math.floor(n / 3)), hp = Math.max(1, Math.round((final ? 220 : L.fake ? 26 : 10 + 2 * n) * (cfgNow().bossHp || 1)));
+    const sz = final ? 0 : 30 + Math.min(8, Math.floor(n / 3)), hp = Math.max(1, Math.round((final ? 9999 : L.fake ? 26 : 10 + 2 * n) * (cfgNow().bossHp || 1)));
     const w = final ? 46 : sz, hh = final ? 44 : sz;
     boss = { x: (gx - 10) * T - w / 2, y: 10 * T - hh, w, h: hh, vx: 0, vy: 0, on: false, hp, max: hp, inv: 0, finv: 0, fl: 0, t: 0, act: false, dead: false, say: 0, ax: ax * T, mx: gx * T - w, cd: 70, atk: null, atkT: 0, phase: 0, air: false,
-      spec: { name: final ? 'KRAL EJDERHA' : L.fake ? 'SAHTE BOSS' : L.name + ' BOSSU', pat: final ? ['walk', 'fire', 'stomp', 'summon', 'rain', 'dash'] : pat, fake: !!L.fake, final, pal: BPAL[n % 6], acc: n % 3 } };
+      spec: { name: final ? 'KRAL EJDERHA' : L.fake ? 'SAHTE BOSS' : L.name + ' BOSSU', pat: final ? ['walk', 'fire', 'hammer', 'stomp', 'hammer', 'summon', 'rain', 'dash', 'fire'] : pat, fake: !!L.fake, final, pal: BPAL[n % 6], acc: n % 3 } };
   }
   function build() {
     const L = LEVELS[lv]; th = TH[L.th]; COLS = L.cols + ARENA; FLAGX = (COLS - 7) * T; ARS = (L.cols + 1) * T;
@@ -485,7 +489,7 @@ window.startLekoBros = function (host, onExit, startLevel, opts) {
     const b = boss; if (!b || b.dead) return;
     if (!b.act) { if (Math.abs(b.x - p.x) < 300) { b.act = true; b.say = 160; sfx(3); } return; }
     b.t++; if (b.say > 0) b.say--; if (b.inv > 0) b.inv--; if (b.finv > 0) b.finv--; if (b.fl > 0) b.fl--;
-    const sp = b.spec, ratio = b.hp / b.max, r1 = ratio < .5, r2 = ratio < .25, sm = (1 + (1 - ratio) * .5 + (r1 ? .12 : 0) + (sp.final ? .15 : 0)) * (cfgNow().bossAtk || 1);
+    const sp = b.spec, ratio = b.hp / b.max, r1 = ratio < .5, r2 = ratio < .25, sm = (1 + (1 - ratio) * .5 + (r1 ? .12 : 0) + (sp.final ? .55 : 0)) * (cfgNow().bossAtk || 1);
     const ph = Math.floor((1 - ratio) * 4); if (ph > b.phase) { b.phase = ph; arenaPows.forEach(([x, y]) => { if (map[y][x] === 6) map[y][x] = 8; }); sfx(7); popups.push({ x: p.x, y: p.y - 10, t: 40 }); }
     const pcx = p.x + p.w / 2, bcx = b.x + b.w / 2, dir = pcx > bcx ? 1 : -1, mouth = b.y + b.h * .45;
     if (b.cd > 0) b.cd--;
@@ -504,6 +508,9 @@ window.startLekoBros = function (host, onExit, startLevel, opts) {
       } else if (a === 'summon') {
         b.vx = 0; if (t === 22) { const alive = enemies.filter(e => e.alive).length; for (let k = 0; k < 1 + (r1 ? 1 : 0) + (sp.final ? 1 : 0) && alive + k < 5; k++) enemies.push({ x: Math.max(b.ax, Math.min(b.mx, bcx + (k ? 1 : -1) * 50 - 6)), y: 10 * T - 20, w: 12, h: 12, vx: dir * .7, vy: -3, on: false, alive: true, sq: 0, t: k % 2 ? 'f' : 'n', hop: 0, edge: false }); sfx(2); }
         if (t > 48) done = true;
+      } else if (a === 'hammer') {
+        b.vx = 0; if (t % 14 === 6 && t < 6 + 14 * (3 + (r1 ? 2 : 0) + (r2 ? 2 : 0) + 2)) { const dx = Math.abs(pcx - bcx); bossShot('hammer', bcx - 4, b.y - 4, dir * Math.min(3.2, .8 + dx / 70), -5.2 - Math.random() * 2); sfx(6); }
+        if (t > 14 * 9 + 20) done = true;
       } else if (a === 'rain') {
         b.vx = 0; const nn = 4 + (r1 ? 2 : 0) + (r2 ? 2 : 0) + (sp.final ? 3 : 0);
         if (t % 11 === 0 && t / 11 <= nn) bossShot('warn', Math.max(b.ax, Math.min(b.mx + b.w, pcx + (Math.random() * 120 - 60))), 150, 0, 0);
@@ -511,7 +518,7 @@ window.startLekoBros = function (host, onExit, startLevel, opts) {
       } else if (a === 'dash') {
         if (t < 30) { b.vx = 0; b.x += Math.sin(t) * .6; } else if (t === 30) { b.vx = dir * 3.4 * (sp.final ? 1.2 : 1); sfx(3); } else if (t > 30 && (t > 80 || (b.vx === 0))) { done = true; }
       }
-      if (done) { b.atk = null; b.cd = Math.max(35, Math.round((125 - (r1 ? 25 : 0) - (r2 ? 20 : 0) - (sp.final ? 25 : 0)) / sm) + Math.floor(Math.random() * 30)); b.vx = 0; }
+      if (done) { b.atk = null; b.cd = Math.max(sp.final ? 14 : 35, Math.round((125 - (r1 ? 25 : 0) - (r2 ? 20 : 0) - (sp.final ? 25 : 0)) / sm) + Math.floor(Math.random() * 30)); b.vx = 0; }
     }
     b.vy = Math.min(b.vy + .3, 6); const sx = b.vx; move(b); const hitWall = b.vx === 0 && sx !== 0; b.vx = b.atk === 'dash' && hitWall ? 0 : sx;
     b.x = Math.max(b.ax, Math.min(b.mx, b.x)); if (b.atk === 'dash' && (b.x <= b.ax || b.x >= b.mx)) b.vx = 0;
@@ -524,7 +531,7 @@ window.startLekoBros = function (host, onExit, startLevel, opts) {
     for (const q of bshots) {
       q.t++;
       if (q.k === 'warn') { if (q.t > 38) { q.dead = true; bossShot('meteor', q.x - 4, -14, 0, 3.6); } continue; }
-      q.x += q.vx; q.y += q.vy;
+      q.x += q.vx; q.y += q.vy; if (q.k === 'hammer') { q.vy += .28; if (q.y > 200) q.dead = true; }
       if (q.k === 'meteor' && q.y > 148) q.dead = true;
       if (q.k === 'fire' && (q.x < 0 || q.x > COLS * T || solidAt(Math.floor(q.x / T), Math.floor(q.y / T)))) q.dead = true;
       if (q.k === 'wave' && (q.t > 160 || q.x < 0 || q.x > COLS * T)) q.dead = true;
@@ -761,12 +768,13 @@ window.startLekoBros = function (host, onExit, startLevel, opts) {
       } else { g.fillStyle = gold; g.fillRect(12, 28, 6, 2); }
     }
     g.restore();
-    if (b.say > 0 && ((b.say >> 3) & 1 || b.say < 110)) { g.fillStyle = '#fff'; g.fillRect(x0 - 14, y0 - 34, 76, 12); g.fillStyle = '#111'; g.font = 'bold 8px monospace'; g.textAlign = 'center'; g.fillText(sp.final ? 'BEN KRALIM!' : sp.fake ? 'BEN BOSSUM!' : 'GEÇEMEZSİN!', x0 + 24, y0 - 25); g.textAlign = 'left'; }
+    if (b.say > 0 && ((b.say >> 3) & 1 || b.say < 110)) { /* konuşma balonu */ g.fillStyle = '#fff'; g.fillRect(x0 - 14, y0 - 34, 76, 12); g.fillStyle = '#111'; g.font = 'bold 8px monospace'; g.textAlign = 'center'; g.fillText(sp.final ? 'BEN KRALIM!' : sp.fake ? 'BEN BOSSUM!' : 'GEÇEMEZSİN!', x0 + 24, y0 - 25); g.textAlign = 'left'; }
   }
   function drawShots() {
     for (const q of bshots) {
       const x = Math.round(q.x - cam), y = Math.round(q.y), f = (frame >> 1) & 1;
       if (q.k === 'warn') { if ((q.t >> 2) & 1) { g.fillStyle = '#ff3b3b'; g.beginPath(); g.moveTo(x - 6, 156); g.lineTo(x + 6, 156); g.lineTo(x, 146); g.fill(); } }
+      else if (q.k === 'hammer') { g.save(); g.translate(x + 4, y + 4); g.rotate(q.t * .3); g.fillStyle = '#7a4a22'; g.fillRect(-1, -6, 2, 12); g.fillStyle = '#9aa0a8'; g.fillRect(-5, -7, 10, 5); g.fillStyle = '#d6dae0'; g.fillRect(-5, -7, 10, 1); g.restore(); }
       else if (q.k === 'meteor') { g.fillStyle = '#ff7a1a'; g.fillRect(x + 1, y - 10, 6, 10); g.fillStyle = '#6a3a1a'; g.fillRect(x, y, 8, 12); g.fillStyle = '#ffd23a'; g.fillRect(x + 2, y + 2, 3, 4); }
       else if (q.k === 'wave') { g.fillStyle = f ? '#ff7a1a' : '#e8410f'; g.fillRect(x, y, 12, 8); g.fillStyle = '#ffd23a'; g.fillRect(x + 3, y + 3 + f, 6, 4); g.fillRect(x + 5, y, 2, 3); }
       else { g.fillStyle = '#e11d48'; g.fillRect(x, y + 1, 8, 6); g.fillRect(x + 1, y, 6, 8); g.fillStyle = f ? '#ffd23a' : '#ff7a1a'; g.fillRect(x + 2, y + 2, 4, 4); }
@@ -809,6 +817,7 @@ window.startLekoBros = function (host, onExit, startLevel, opts) {
     g.fillStyle = '#fff'; g.font = 'bold 9px monospace';
     g.fillText('LEKO ' + String(score).padStart(6, '0') + '   ● x' + String(coins).padStart(2, '0') + '   1-' + (lv + 1) + '   ♥ ' + Math.max(0, lives) + '   ⏱ ' + Math.max(0, time), 6, 10);
     if (boss && boss.act && !boss.dead) { const bb = boss, bw = 200, bx = (W - bw) / 2; g.fillStyle = 'rgba(0,0,0,.55)'; g.fillRect(bx - 2, 16, bw + 4, 14); g.fillStyle = '#400'; g.fillRect(bx, 18, bw, 6); g.fillStyle = bb.spec.final ? '#ffb02e' : '#e11d48'; g.fillRect(bx, 18, Math.round(bw * Math.max(0, bb.hp) / bb.max), 6); g.fillStyle = '#fff'; g.font = 'bold 7px monospace'; g.textAlign = 'center'; g.fillText(bb.spec.name, W / 2, 28); g.textAlign = 'left'; }
+    if (hintT > 0) { hintT--; g.fillStyle = 'rgba(0,0,0,.75)'; g.fillRect(10, 70, W - 20, 30); g.fillStyle = '#ffd23a'; g.font = 'bold 8px monospace'; g.textAlign = 'center'; g.fillText('Düzenleme için önce Leko modunu aç', W / 2, 83); g.fillText('(şifreyle yönetici girişi gerekir)', W / 2, 94); g.textAlign = 'left'; }
     if (Object.keys(cfgNow()).length) { g.fillStyle = '#7ee0ff'; g.font = 'bold 7px monospace'; g.fillText('AYARLI', 6, 22); }
     if (bossMsg > 0) { g.fillStyle = 'rgba(0,0,0,.6)'; g.fillRect(0, 150, W, 26); g.fillStyle = '#ffd23a'; g.font = 'bold 11px monospace'; g.textAlign = 'center'; g.fillText(bossTxt, W / 2, 167); g.textAlign = 'left'; }
     if (pw > 0) { g.fillStyle = pw === 2 ? '#ffd23a' : '#e11d48'; g.font = 'bold 8px monospace'; g.textAlign = 'right'; g.fillText(pw === 2 ? 'ATEŞ  [X]' : 'BÜYÜK', W - 4, 10); }

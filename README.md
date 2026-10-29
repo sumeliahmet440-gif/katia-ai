@@ -42,7 +42,9 @@ Render ücretsiz planda dosyalar her yeniden başlatmada silinir; isimler ve ban
 
 
 ## Oyun düzenleme modu (sadece Leko modu açıkken)
-- Oyun açıkken klavyede **X tuşuna 3 kez hızlıca** basınca düzenleme paneli açılır (Leko modunda ve yönetici hesabıyla; aksi halde hiçbir şey olmaz). Oyun panel açıkken durur.
+- Oyun açıkken klavyede **X tuşuna 3 kez hızlıca** basınca düzenleme paneli açılır (Leko modunun şifresini girmiş yönetici hesabıyla, hangi mod seçili olursa olsun; yetkin yoksa ekranda uyarı çıkar). Oyun panel açıkken durur.
 - Bölüm seç; alanlar: düşman sayısı çarpanı, düşman hızı, boss can çarpanı, boss saldırı hızı, süre, yerçekimi, zıplama gücü, oyuncu hızı, kaygan zemin, güç blokları (kapatınca mantar/çiçek çıkmaz). Boş bırakılan alan varsayılandır.
 - **KAYDET (HERKESE)**: ayarlar sunucuda saklanır, tüm oyunculara yansır (en geç ~30 sn; oyun yeniden başlayınca/bölüm yüklenince geçerli). Ayarlı bölümde sol üstte "AYARLI" yazar. **KAYDET + BÖLÜME GİT** seçilen bölümü hemen başlatır.
 - Sunucu değerleri güvenli aralığa sıkıştırır (ör. düşman çarpanı en çok 4, süre 30-999). Sadece yöneticiler kaydedebilir. Kalıcı olması için Upstash Redis bağlı olmalı (yukarıdaki bölüm), yoksa Render yeniden başlayınca ayarlar silinir.
+
+- **1-30 Kral Ejderha**: lav üstünde köprü, 9999 can (pratikte yenilmez), çekiç yağmuru, ateş, yer dalgası, meteor, atılma ve minyon saldırıları.

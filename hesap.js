@@ -153,7 +153,7 @@ const _apply=window.apply;
 window.apply=function(){_apply();updUI()};
 
 /* ---------- oyun düzenleme modu (Leko modu açıkken) ---------- */
-window.lekoEditAllowed=()=>IS_ADMIN&&S.persona==='leko';
+window.lekoEditAllowed=()=>!!IS_ADMIN; // Leko modu (şifre) açılmış yönetici hesabı; hangi mod seçili olursa olsun
 window.gameCfgSave=async cfg=>{
  const r=await api('admin/oyun',{cfg});
  if(r.status===200&&r.j.gcfg){window.LEKO_GCFG=r.j.gcfg;sv('katia_gcfg',r.j.gcfg)}
