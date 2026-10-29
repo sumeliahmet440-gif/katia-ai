@@ -1,5 +1,5 @@
 'use strict';
-/* LEKO BROS — Katia AI için özgün (kendi tasarımımız) platform oyunu: 25 bölüm (1-1 … 1-25).
+/* LEKO BROS — Katia AI için özgün (kendi tasarımımız) platform oyunu: 30 bölüm (1-1 … 1-30) · her bölümün sonunda boss.
    Kontroller: ← → / A D yürü · ↑ / W / Boşluk zıpla · X / F / Shift ateş topu · mobilde ekrandaki düğmeler.
    Mekanikler: mantar (büyü, tuğla kır) · ateş çiçeği (ateş topu at) · hasar alınca küçül.
    Bölümü bitirince dokun / Enter ile sonrakine geçilir. Dış dosya yok, tek dosya. */
@@ -70,6 +70,11 @@ window.startLekoBros = function (host, onExit, startLevel, opts) {
     ruins:  { bg: 'ruins',  sky: '#2a2038', gb: '#4a4a3a', gt: '#6a8a4a', gl: '#34402a', bk: '#7a7a60', bl: '#2a2a1e', hd: '#8a8a78', hh: '#c0c0a8', hs: '#40402e' },
     rainbow:{ bg: 'rainbow', sky: '#6ec6ff', gb: '#e89a4a', gt: '#8ae04a', gl: '#5ab02a', bk: '#ff6a8a', bl: '#6a1a30', hd: '#c0b8d8', hh: '#ffffff', hs: '#7a6a98', pl: ['#ffe66a', '#ff8ad0'] },
     king:   { bg: 'dragon', sky: '#08020a', gb: '#3a1a4a', gt: '#e0b030', gl: '#200a2a', bk: '#a02a3a', bl: '#2a0610', hd: '#9a8aaa', hh: '#e0d0f0', hs: '#3a2a4a', pl: ['#ffe08a', '#c0802a'], lava: 1 },
+    nforest:{ bg: 'forest', sky: '#0a1a2a', gb: '#2a2a3a', gt: '#3a6a6a', gl: '#1a3a3a', bk: '#4a3a6a', bl: '#150a2a', hd: '#6a7a8a', hh: '#a8b8c8', hs: '#2e3a46' },
+    gdesert:{ bg: 'desert', sky: '#ffd070', gb: '#d9a020', gt: '#ffe27a', gl: '#b07a10', bk: '#e0a030', bl: '#6a3a00', hd: '#c8b070', hh: '#fff0b0', hs: '#7a6420' },
+    fcastle:{ bg: 'ice',    sky: '#6a88b8', gb: '#4a6080', gt: '#c8e0f8', gl: '#2e4058', bk: '#6a8ab8', bl: '#1e2e48', hd: '#7a90b0', hh: '#d8e8f8', hs: '#3a4c68', pl: ['#e8f4ff', '#7a9cd0'], slip: 1, lava: 1 },
+    dspace: { bg: 'space',  sky: '#02020a', gb: '#2a2a40', gt: '#9a5ae0', gl: '#181828', bk: '#4a3a8a', bl: '#120a2a', hd: '#7a78a0', hh: '#c8c0f0', hs: '#34304e', pl: ['#d8a8ff', '#6a3ac0'], grav: .2, lava: 1 },
+    dking:  { bg: 'dragon', sky: '#060106', gb: '#2a1030', gt: '#d03a3a', gl: '#160618', bk: '#8a1a2a', bl: '#200408', hd: '#8a7a9a', hh: '#e8d0f0', hs: '#2e1a3a', pl: ['#ff8a5a', '#a02a1a'], lava: 1 },
     finale: { bg: 'finale', sky: '#12020f', gb: '#3a2850', gt: '#a43a6a', gl: '#25143a', bk: '#5a2a7a', bl: '#1a0a2a', hd: '#74688c', hh: '#bfb4d6', hs: '#32284a', pl: ['#ffb0c8', '#a43a6a'], lava: 1 }
   };
 
@@ -332,37 +337,52 @@ window.startLekoBros = function (host, onExit, startLevel, opts) {
     { name: 'BATAKLIK', th: 'swamp', cols: 190, time: 350, run(h) { gen(h, { seed: 74, w: { flat: 1, pipe: 2, wall: 1, stairs: 1, pit: 3, plat: 3, chain: 1 }, den: .80, mix: ['j', 'j', 'n', 's'], pow: .6 }); } },
     { name: 'KAR FIRTINASI', th: 'blizzard', cols: 200, time: 360, run(h) { gen(h, { seed: 111, w: { flat: 1, pipe: 2, wall: 1, stairs: 2, pit: 2, plat: 2, chain: 2 }, den: .75, mix: ['n', 'f', 'j'], pow: .6 }); } },
     { name: 'ŞEKER DİYARI', th: 'candy', cols: 190, time: 340, run(h) { gen(h, { seed: 148, w: { flat: 1, pipe: 2, wall: 2, stairs: 2, pit: 2, plat: 4 }, den: .80, mix: ['n', 'j', 'f'], pow: .8 }); } },
-    { name: 'SAHTE KALE', th: 'castle', cols: 210, time: 420, run(h) {
-      gen(h, { seed: 185, w: { flat: 1, pipe: 1, wall: 2, stairs: 2, pit: 2, bigpit: 1, plat: 3 }, den: .85, mix: ['n', 'f', 's'], pow: .7, end: 210 - 52, fin: false });
-      const ax = 210 - 40, gx = 210 - 12;
-      h.pow(ax + 2, 7); h.pow(ax + 5, 7); h.put(ax + 3, 7, 3); h.put(ax + 4, 7, 3);
-      h.gate(gx, 3, 9); h.boss(210 - 24, ax, gx);
-    } },
+    { name: 'SAHTE KALE', th: 'castle', cols: 210, time: 420, fake: true, run(h) { gen(h, { seed: 185, w: { flat: 1, pipe: 1, wall: 2, stairs: 2, pit: 2, bigpit: 1, plat: 3 }, den: .85, mix: ['n', 'f', 's'], pow: .7 }); } },
     { name: 'UZAY', th: 'space', cols: 210, time: 380, run(h) { gen(h, { seed: 222, w: { flat: 1, pipe: 1, wall: 1, stairs: 1, pit: 2, bigpit: 1, plat: 2, chain: 3 }, den: .75, mix: ['n', 'f', 's'], pow: .6 }); } },
     { name: 'PİRAMİT', th: 'pyramid', cols: 210, time: 370, run(h) { gen(h, { seed: 259, w: { flat: 1, pipe: 1, wall: 2, stairs: 4, pit: 2, plat: 3 }, den: .90, mix: ['s', 'f', 'n', 'j'], pow: .6 }); } },
     { name: 'HARABE', th: 'ruins', cols: 200, time: 380, run(h) { gen(h, { seed: 296, w: { flat: 1, pipe: 1, wall: 3, stairs: 2, pit: 2, bigpit: 1, plat: 3, chain: 1 }, den: .90, mix: ['f', 's', 'j', 'n'], pow: .6 }); } },
     { name: 'GÖKKUŞAĞI', th: 'rainbow', cols: 210, time: 380, run(h) { gen(h, { seed: 333, w: { flat: 1, pipe: 1, wall: 1, stairs: 1, pit: 2, plat: 2, chain: 4 }, den: .80, mix: ['n', 'f', 'j'], pow: .6 }); } },
-    { name: 'KRAL KALESİ', th: 'king', cols: 300, time: 620, run(h) { gen(h, { seed: 370, w: { flat: 1, pipe: 2, wall: 2, stairs: 2, pit: 2, bigpit: 2, plat: 3, chain: 2 }, den: .95, mix: ['f', 's', 'j', 'f', 'n'], pow: .7 }); } }
+    { name: 'KRAL KALESİ', th: 'king', cols: 300, time: 620, run(h) { gen(h, { seed: 370, w: { flat: 1, pipe: 2, wall: 2, stairs: 2, pit: 2, bigpit: 2, plat: 3, chain: 2 }, den: .95, mix: ['f', 's', 'j', 'f', 'n'], pow: .7 }); } },
+    { name: 'GECE ORMANI', th: 'nforest', cols: 220, time: 380, run(h) { gen(h, { seed: 407, w: { flat: 1, pipe: 2, wall: 2, stairs: 1, pit: 3, plat: 3, chain: 2 }, den: .9, mix: ['j', 's', 'f', 'n'], pow: .6 }); } },
+    { name: 'ALTIN ÇÖL', th: 'gdesert', cols: 230, time: 390, run(h) { gen(h, { seed: 444, w: { flat: 1, pipe: 2, wall: 2, stairs: 3, pit: 3, bigpit: 1, plat: 3 }, den: .95, mix: ['f', 's', 'j', 'f'], pow: .6 }); } },
+    { name: 'DONMUŞ KALE', th: 'fcastle', cols: 230, time: 400, run(h) { gen(h, { seed: 481, w: { flat: 1, pipe: 1, wall: 2, stairs: 2, pit: 2, bigpit: 2, plat: 2, chain: 2 }, den: .95, mix: ['f', 's', 'j', 'f'], pow: .7 }); } },
+    { name: 'DERİN UZAY', th: 'dspace', cols: 240, time: 420, run(h) { gen(h, { seed: 518, w: { flat: 1, pipe: 1, wall: 1, stairs: 1, pit: 2, bigpit: 2, plat: 2, chain: 4 }, den: 1, mix: ['f', 's', 'j', 'f', 'n'], pow: .7 }); } },
+    { name: 'KRAL EJDERHA', th: 'dking', cols: 260, time: 460, run(h) { gen(h, { seed: 555, w: { flat: 1, pipe: 2, wall: 2, stairs: 2, pit: 2, bigpit: 3, plat: 3, chain: 3 }, den: 1, mix: ['f', 's', 'j', 'f', 'n', 's'], pow: .8 }); } }
   ];
 
   /* ---- bölüm durumu ---- */
   let map, enemies, popups, p, cam, score, coins, lives = 3, time, frame;
-  let boss = null, bossMsg = 0, gateList = [];
+  let boss = null, bossMsg = 0, bossTxt = '', gateList = [], bshots = [], arenaPows = [], cp = 0, ARS = 0;
+  const ARENA = 46;
   let items = [], fireballs = [], parts = [], pw = 0, keepPw = 0, inv = 0; // pw: 0 küçük · 1 büyük · 2 ateş
   let lv = Math.max(0, Math.min(LEVELS.length - 1, (startLevel | 0) - 1));
   let COLS = 150, FLAGX = 0, th = TH.day, introT = 0, endT = 0, lsScore = 0, lsCoins = 0;
+  const BPAL = [['#7c1d6f', '#a52a94', '#f4d03f'], ['#1d4f7c', '#2a7ab8', '#ffe27a'], ['#7c2a1d', '#b84a2a', '#ffd23a'], ['#1d7c4a', '#2ab870', '#ffe27a'], ['#4a4a5a', '#7a7a92', '#ff5a5a'], ['#7c6a1d', '#b89a2a', '#fff6c0']];
+  function makeArena(L) {
+    const n = lv + 1, final = n === LEVELS.length, gx = COLS - 12, ax = L.cols + 6;
+    const put = (x, y, t) => { if (x >= 0 && x < COLS && y >= 0 && y < ROWS) map[y][x] = t; };
+    for (let x = L.cols; x < COLS; x++) { put(x, 10, 1); put(x, 11, 1); for (let r = 0; r < 10; r++) put(x, r, 0); }
+    for (let r = 2; r <= 9; r++) { put(gx, r, 4); gateList.push([gx, r]); }
+    const pp = final ? [8, 12, 16, 20] : [9, 14, 19]; // güç blokları (boss ilerledikçe yenilenir)
+    pp.forEach((o, k) => { put(ax + o, 6, 8); arenaPows.push([ax + o, 6]); });
+    const pat = ['walk', 'fire']; if (n >= 6) pat.push('stomp'); if (n >= 11) pat.push('summon'); if (n >= 16) pat.push('rain'); if (n >= 21) pat.push('dash');
+    if (L.fake) { pat.length = 0; pat.push('walk', 'fire', 'stomp', 'summon'); }
+    const sz = final ? 0 : 30 + Math.min(8, Math.floor(n / 3)), hp = final ? 220 : L.fake ? 26 : 10 + 2 * n;
+    const w = final ? 46 : sz, hh = final ? 44 : sz;
+    boss = { x: (gx - 10) * T - w / 2, y: 10 * T - hh, w, h: hh, vx: 0, vy: 0, on: false, hp, max: hp, inv: 0, finv: 0, fl: 0, t: 0, act: false, dead: false, say: 0, ax: ax * T, mx: gx * T - w, cd: 70, atk: null, atkT: 0, phase: 0, air: false,
+      spec: { name: final ? 'KRAL EJDERHA' : L.fake ? 'SAHTE BOSS' : L.name + ' BOSSU', pat: final ? ['walk', 'fire', 'stomp', 'summon', 'rain', 'dash'] : pat, fake: !!L.fake, final, pal: BPAL[n % 6], acc: n % 3 } };
+  }
   function build() {
-    const L = LEVELS[lv]; th = TH[L.th]; COLS = L.cols; FLAGX = (COLS - 7) * T;
-    map = [...Array(ROWS)].map(() => new Uint8Array(COLS)); enemies = []; boss = null; bossMsg = 0; gateList = [];
+    const L = LEVELS[lv]; th = TH[L.th]; COLS = L.cols + ARENA; FLAGX = (COLS - 7) * T; ARS = (L.cols + 1) * T;
+    map = [...Array(ROWS)].map(() => new Uint8Array(COLS)); enemies = []; boss = null; bossMsg = 0; gateList = []; bshots = []; arenaPows = [];
     const put = (x, y, t) => { if (x >= 0 && x < COLS && y >= 0 && y < ROWS) map[y][x] = t; };
     const h = {
-      put, cols: COLS,
+      put, cols: L.cols,
       row: (a, b, y, t) => { for (let x = a; x <= b; x++) put(x, y, t); },
       land: (a, b) => { for (let x = a; x <= b; x++) { put(x, 10, 1); put(x, 11, 1); } },
       cut: (a, b) => { for (let x = a; x <= b; x++) { put(x, 10, 0); put(x, 11, 0); } },
       pow: (x, y) => put(x, y, 8),
       gate: (x, r0, r1) => { for (let r = r0; r <= r1; r++) { put(x, r, 4); gateList.push([x, r]); } },
-      boss: (x, ax, gx) => { boss = { x: x * T, y: 10 * T - 30, w: 30, h: 30, vx: 0, vy: 0, on: false, hp: 3, inv: 0, fl: 0, t: 0, act: false, dead: false, say: 0, ax: ax * T, mx: gx * T - 30 }; },
       ground: gaps => { for (let x = 0; x < COLS; x++) if (!gaps.some(([a, b]) => x >= a && x <= b)) { put(x, 10, 1); put(x, 11, 1); } },
       pipe: (x, n) => { for (let r = 10 - n; r < 10; r++) { put(x, r, 5); put(x + 1, r, 5); } },
       col: (x, n) => { for (let r = 10 - n; r < 10; r++) put(x, r, 4); },
@@ -371,15 +391,17 @@ window.startLekoBros = function (host, onExit, startLevel, opts) {
       chain: (x, seq) => { for (const [w, r, gp, et] of seq) { for (let i = 0; i < w; i++) put(x + i, r, 7); if (et) h.en(x + (w >> 1), et, r); x += w + gp; } return x; }
     };
     L.run(h);
+    makeArena(L);
     enemies = enemies.filter(e => solidAt(Math.floor(e.x / T), Math.floor((e.y + e.h + 8) / T)));
     popups = []; items = []; fireballs = []; parts = []; score = score || 0; coins = coins || 0;
   }
   function reset(full, intro) {
     if (full) { score = 0; coins = 0; lives = 3; keepPw = 0; }
     build();
-    p = { x: 2 * T, y: 9 * T - 4, w: 12, h: 14, vx: 0, vy: 0, on: false, dir: 1, held: false, fh: false };
+    if (intro) cp = 0;
+    p = { x: cp || 2 * T, y: 9 * T - 4, w: 12, h: 14, vx: 0, vy: 0, on: false, dir: 1, held: false, fh: false };
     pw = keepPw; inv = 0; if (pw > 0) { p.h = 24; p.y -= 10; }
-    cam = 0; time = LEVELS[lv].time; frame = 0; state = 'play'; endT = 0;
+    cam = 0; time = LEVELS[lv].time + 80; frame = 0; state = 'play'; endT = 0;
     introT = intro ? 100 : 0; if (intro) { lsScore = score; lsCoins = coins; }
   }
   function advance() { // oyun bitti / bölüm tamam ekranından devam
@@ -427,15 +449,73 @@ window.startLekoBros = function (host, onExit, startLevel, opts) {
     else score += 1000;
     popups.push({ x: it.x, y: it.y - 4, t: 30 });
   }
-  function bossHit() {
-    const b = boss; if (b.inv > 0 || b.dead) return;
-    b.hp--; b.inv = 45; b.fl = 24; score += 200; sfx(4);
-    if (b.hp <= 0) { // sahte çıktı!
-      b.dead = true; bossMsg = 260; score += 2000; sfx(5);
-      for (let k = 0; k < 12; k++) parts.push({ x: b.x + (k % 4) * 8, y: b.y + (k >> 2) * 10, vx: (k % 4 - 1.5) * .9, vy: -3 - (k >> 2) * .6, t: 70, c: k % 3 ? '#c99a5a' : '#a97a3a' });
-      enemies.push({ x: b.x + 8, y: b.y + 16, w: 12, h: 12, vx: .9, vy: -3, on: false, alive: true, sq: 0, t: 'n', hop: 0, edge: false });
-      gateList.forEach(([gx, gr]) => { map[gr][gx] = 0; });
+  function bossHit(dmg, fireDmg) {
+    const b = boss; if (!b || b.dead || !b.act) return;
+    if (fireDmg) { if (b.finv > 0) return; b.finv = 9; } else { if (b.inv > 0) return; b.inv = 34; }
+    b.hp -= dmg; b.fl = 14; score += 100 * dmg; sfx(4);
+    if (b.hp <= 0) bossDie();
+  }
+  function bossDie() {
+    const b = boss, sp = b.spec; b.dead = true; b.hp = 0; bossMsg = 300; score += sp.final ? 50000 : sp.fake ? 3000 : 5000; sfx(5);
+    bossTxt = sp.final ? 'KRAL EJDERHA YENİLDİ!' : sp.fake ? 'SAHTE BOSS! KARTONMUŞ :)' : 'BOSS YENİLDİ!';
+    const cols = sp.fake ? ['#c99a5a', '#a97a3a', '#c99a5a'] : [sp.pal[0], sp.pal[1], sp.pal[2]];
+    for (let k = 0; k < (sp.final ? 28 : 14); k++) parts.push({ x: b.x + (k % 5) * (b.w / 5), y: b.y + (k % 4) * (b.h / 4), vx: (k % 5 - 2) * .9, vy: -3 - (k % 3) * .8, t: 90, c: cols[k % 3] });
+    bshots = [];
+    enemies.forEach(e => { if (e.alive) { e.alive = false; e.sq = 20; } });
+    if (sp.fake) enemies.push({ x: b.x + 8, y: b.y + 16, w: 12, h: 12, vx: .9, vy: -3, on: false, alive: true, sq: 0, t: 'n', hop: 0, edge: false });
+    gateList.forEach(([gx, gr]) => { map[gr][gx] = 0; });
+  }
+  function bossShot(k, x, y, vx, vy) { bshots.push({ k, x, y, vx, vy, t: 0, w: k === 'wave' ? 12 : k === 'meteor' ? 8 : 8, h: k === 'wave' ? 8 : k === 'meteor' ? 12 : 8 }); }
+  function bossUpdate() {
+    const b = boss; if (!b || b.dead) return;
+    if (!b.act) { if (Math.abs(b.x - p.x) < 300) { b.act = true; b.say = 160; sfx(3); } return; }
+    b.t++; if (b.say > 0) b.say--; if (b.inv > 0) b.inv--; if (b.finv > 0) b.finv--; if (b.fl > 0) b.fl--;
+    const sp = b.spec, ratio = b.hp / b.max, r1 = ratio < .5, r2 = ratio < .25, sm = 1 + (1 - ratio) * .5 + (r1 ? .12 : 0) + (sp.final ? .15 : 0);
+    const ph = Math.floor((1 - ratio) * 4); if (ph > b.phase) { b.phase = ph; arenaPows.forEach(([x, y]) => { if (map[y][x] === 6) map[y][x] = 8; }); sfx(7); popups.push({ x: p.x, y: p.y - 10, t: 40 }); }
+    const pcx = p.x + p.w / 2, bcx = b.x + b.w / 2, dir = pcx > bcx ? 1 : -1, mouth = b.y + b.h * .45;
+    if (b.cd > 0) b.cd--;
+    if (!b.atk) {
+      if (b.on) { b.vx = dir * .5 * sm; if (b.t % Math.max(55, Math.round(120 / sm)) === 0) { b.vy = -5.6; b.vx = dir * 1.5; } }
+      if (b.cd <= 0 && sp.pat.length > 1) { b.atk = sp.pat[1 + Math.floor(Math.random() * (sp.pat.length - 1))]; b.atkT = 0; b.air = false; }
+    } else {
+      const a = b.atk, t = ++b.atkT; let done = false;
+      if (a === 'fire') {
+        b.vx = 0; if (t === 26) { const nn = 1 + (r1 ? 1 : 0) + (r2 ? 1 : 0) + (sp.final ? 1 : 0); for (let k = 0; k < nn; k++) bossShot('fire', bcx + dir * b.w / 2, k % 2 ? 126 : 149, dir * (1.7 + k * .35) * (sp.final ? 1.2 : 1), 0); sfx(6); }
+        if (t > 50 + (sp.final ? 20 : 0)) done = true;
+      } else if (a === 'stomp') {
+        b.vx = 0; if (t === 24) { b.vy = -7.6; b.vx = dir * Math.min(2.4, Math.abs(pcx - bcx) / 40 + .4); b.air = true; sfx(1); }
+        if (b.air && t > 30 && b.on) { bossShot('wave', bcx - 6, 152, -1.7 * sm, 0); bossShot('wave', bcx - 6, 152, 1.7 * sm, 0); if (r1 || sp.final) { bossShot('wave', bcx - 6, 152, -2.6, 0); bossShot('wave', bcx - 6, 152, 2.6, 0); } sfx(3); b.air = false; b.atkT = 100; }
+        if (t > 120) done = true;
+      } else if (a === 'summon') {
+        b.vx = 0; if (t === 22) { const alive = enemies.filter(e => e.alive).length; for (let k = 0; k < 1 + (r1 ? 1 : 0) + (sp.final ? 1 : 0) && alive + k < 5; k++) enemies.push({ x: Math.max(b.ax, Math.min(b.mx, bcx + (k ? 1 : -1) * 50 - 6)), y: 10 * T - 20, w: 12, h: 12, vx: dir * .7, vy: -3, on: false, alive: true, sq: 0, t: k % 2 ? 'f' : 'n', hop: 0, edge: false }); sfx(2); }
+        if (t > 48) done = true;
+      } else if (a === 'rain') {
+        b.vx = 0; const nn = 4 + (r1 ? 2 : 0) + (r2 ? 2 : 0) + (sp.final ? 3 : 0);
+        if (t % 11 === 0 && t / 11 <= nn) bossShot('warn', Math.max(b.ax, Math.min(b.mx + b.w, pcx + (Math.random() * 120 - 60))), 150, 0, 0);
+        if (t > nn * 11 + 40) done = true;
+      } else if (a === 'dash') {
+        if (t < 30) { b.vx = 0; b.x += Math.sin(t) * .6; } else if (t === 30) { b.vx = dir * 3.4 * (sp.final ? 1.2 : 1); sfx(3); } else if (t > 30 && (t > 80 || (b.vx === 0))) { done = true; }
+      }
+      if (done) { b.atk = null; b.cd = Math.max(35, Math.round((125 - (r1 ? 25 : 0) - (r2 ? 20 : 0) - (sp.final ? 25 : 0)) / sm) + Math.floor(Math.random() * 30)); b.vx = 0; }
     }
+    b.vy = Math.min(b.vy + .3, 6); const sx = b.vx; move(b); const hitWall = b.vx === 0 && sx !== 0; b.vx = b.atk === 'dash' && hitWall ? 0 : sx;
+    b.x = Math.max(b.ax, Math.min(b.mx, b.x)); if (b.atk === 'dash' && (b.x <= b.ax || b.x >= b.mx)) b.vx = 0;
+    if (p.x < b.x + b.w && p.x + p.w > b.x && p.y < b.y + b.h && p.y + p.h > b.y) {
+      if (p.vy > 0 && p.y + p.h - b.y < 14) { bossHit(2, false); p.vy = -5.4; }
+      else { hurt(); if (state !== 'play') return; }
+    }
+  }
+  function shotsUpdate() {
+    for (const q of bshots) {
+      q.t++;
+      if (q.k === 'warn') { if (q.t > 38) { q.dead = true; bossShot('meteor', q.x - 4, -14, 0, 3.6); } continue; }
+      q.x += q.vx; q.y += q.vy;
+      if (q.k === 'meteor' && q.y > 148) q.dead = true;
+      if (q.k === 'fire' && (q.x < 0 || q.x > COLS * T || solidAt(Math.floor(q.x / T), Math.floor(q.y / T)))) q.dead = true;
+      if (q.k === 'wave' && (q.t > 160 || q.x < 0 || q.x > COLS * T)) q.dead = true;
+      if (!q.dead && p.x < q.x + q.w && p.x + p.w > q.x && p.y < q.y + q.h && p.y + p.h > q.y) { q.dead = true; hurt(); if (state !== 'play') return; }
+    }
+    bshots = bshots.filter(q => !q.dead);
   }
   function fireEnemy(e) { e.alive = false; e.sq = 20; score += 100; popups.push({ x: e.x, y: e.y - 6, t: 24 }); }
   function bump(tx, ty) {
@@ -479,23 +559,11 @@ window.startLekoBros = function (host, onExit, startLevel, opts) {
         else { hurt(); if (state !== 'play') return; }
       }
     }
-    // sahte boss
-    if (boss && !boss.dead) {
-      const b = boss;
-      if (!b.act) { if (Math.abs(b.x - p.x) < 260) { b.act = true; b.say = 140; sfx(3); } }
-      else {
-        if (b.say > 0) b.say--; if (b.inv > 0) b.inv--; if (b.fl > 0) b.fl--; b.t++;
-        const dir = p.x + p.w / 2 > b.x + 15 ? 1 : -1;
-        if (b.on) { b.vx = dir * (.45 + (3 - b.hp) * .15); if (b.t % 110 === 0) { b.vy = -5.6; b.vx = dir * 1.5; } }
-        b.vy = Math.min(b.vy + .3, 6); const sx = b.vx; move(b); if (!b.vx) b.vx = sx; b.vx = sx;
-        b.x = Math.max(b.ax, Math.min(b.mx, b.x));
-        if (p.x < b.x + b.w && p.x + p.w > b.x && p.y < b.y + b.h && p.y + p.h > b.y) {
-          if (p.vy > 0 && p.y + p.h - b.y < 14) { if (b.inv === 0) bossHit(); p.vy = -5.2; }
-          else { hurt(); if (state !== 'play') return; }
-        }
-      }
-    }
+    // boss + saldırıları
+    bossUpdate(); if (state !== 'play') return;
+    shotsUpdate(); if (state !== 'play') return;
     if (bossMsg > 0) bossMsg--;
+    if (!cp && p.x > ARS) cp = ARS; // arena kontrol noktası
     // eşyalar (mantar / ateş çiçeği)
     for (const it of items) {
       if (it.emerge > 0) { it.emerge--; it.y -= 1; continue; }
@@ -509,7 +577,7 @@ window.startLekoBros = function (host, onExit, startLevel, opts) {
       f.vy = Math.min(f.vy + .28, 4); const sx = f.vx; const rr = move(f); if (rr.hitX) f.dead = true; else f.vx = sx;
       if (f.on) f.vy = -2.7;
       if (f.y > H + 10 || (th.lava && f.y > LAVA) || Math.abs(f.x - p.x) > 280) f.dead = true;
-      if (boss && boss.act && !boss.dead && !f.dead && f.x < boss.x + boss.w && f.x + f.w > boss.x && f.y < boss.y + boss.h && f.y + f.h > boss.y) { bossHit(); f.dead = true; }
+      if (boss && boss.act && !boss.dead && !f.dead && f.x < boss.x + boss.w && f.x + f.w > boss.x && f.y < boss.y + boss.h && f.y + f.h > boss.y) { bossHit(1, true); f.dead = true; }
       for (const e of enemies) if (e.alive && !f.dead && f.x < e.x + e.w && f.x + f.w > e.x && f.y < e.y + e.h && f.y + f.h > e.y) { fireEnemy(e); f.dead = true; sfx(4); }
     }
     fireballs = fireballs.filter(f => !f.dead);
@@ -643,19 +711,50 @@ window.startLekoBros = function (host, onExit, startLevel, opts) {
     g.restore();
   }
   function drawBoss() {
-    const b = boss, x = Math.round(b.x - cam), y = Math.round(b.y); if (x < -40 || x > W + 40) return;
-    const fl = b.fl > 0 && ((frame >> 1) & 1), wob = b.act ? Math.round(Math.sin(frame / 6) * 1) : 0;
-    g.fillStyle = fl ? '#fff' : '#7c1d6f'; g.fillRect(x + 1, y + 6 + wob, 28, 24); g.fillRect(x + 4, y + 2 + wob, 22, 6);
-    g.fillStyle = fl ? '#fff' : '#a52a94'; g.fillRect(x + 1, y + 6 + wob, 28, 3);
-    g.fillStyle = '#f4d03f'; g.fillRect(x + 6, y - 2 + wob, 3, 6); g.fillRect(x + 13, y - 5 + wob, 4, 9); g.fillRect(x + 21, y - 2 + wob, 3, 6); g.fillRect(x + 6, y + 3 + wob, 18, 2); // taç
-    g.fillStyle = '#fff'; g.fillRect(x + 6, y + 11 + wob, 7, 6); g.fillRect(x + 17, y + 11 + wob, 7, 6); g.fillStyle = '#e11d48'; g.fillRect(x + 9, y + 13 + wob, 3, 4); g.fillRect(x + 18, y + 13 + wob, 3, 4);
-    g.fillStyle = '#111'; g.fillRect(x + 5, y + 9 + wob, 9, 2); g.fillRect(x + 16, y + 9 + wob, 9, 2); // kızgın kaşlar
-    g.fillStyle = '#111'; g.fillRect(x + 7, y + 21 + wob, 16, 6); g.fillStyle = '#fff'; for (let k = 0; k < 4; k++) g.fillRect(x + 8 + k * 4, y + 21 + wob, 2, 3);
-    if (b.hp <= 2) { g.fillStyle = '#c99a5a'; g.fillRect(x + 20, y + 17 + wob, 9, 12); g.fillStyle = '#a97a3a'; for (let k = 0; k < 4; k++) g.fillRect(x + 20, y + 19 + k * 3 + wob, 9, 1); } // karton yırtığı
-    if (b.hp <= 1) { g.fillStyle = '#c99a5a'; g.fillRect(x + 1, y + 6 + wob, 12, 14); g.fillStyle = '#a97a3a'; for (let k = 0; k < 5; k++) g.fillRect(x + 1, y + 8 + k * 3 + wob, 12, 1); g.fillStyle = '#fff'; g.fillRect(x + 5, y + 11 + wob, 3, 3); g.fillStyle = '#111'; g.fillRect(x + 6, y + 12 + wob, 1, 2); }
-    g.fillStyle = '#e8d8a0'; g.fillRect(x + 11, y - 1 + wob, 9, 2); // bant
-    if (b.act) { g.fillStyle = '#400'; g.fillRect(x, y - 11, 30, 4); g.fillStyle = '#e11d48'; g.fillRect(x + 1, y - 10, Math.round(28 * Math.max(0, b.hp) / 3), 2); }
-    if (b.say > 0 && ((b.say >> 3) & 1 || b.say < 100)) { g.fillStyle = '#fff'; g.fillRect(x - 14, y - 26, 60, 12); g.fillStyle = '#111'; g.font = 'bold 8px monospace'; g.textAlign = 'center'; g.fillText('BEN BOSSUM!', x + 16, y - 17); g.textAlign = 'left'; }
+    const b = boss, sp = b.spec; const x0 = Math.round(b.x - cam), y0 = Math.round(b.y); if (x0 < -60 || x0 > W + 60) return;
+    const fl = b.fl > 0 && ((frame >> 1) & 1), wob = b.act ? Math.round(Math.sin(frame / 6)) : 0, tele = b.atk && b.atkT < 28 && ((frame >> 2) & 1);
+    g.save();
+    if (sp.final) {
+      g.translate(x0 + (b.vx < 0 ? 0 : 0), y0 + wob);
+      const c = fl ? '#fff' : tele ? '#ff8a5a' : '#1f6a5a', c2 = fl ? '#fff' : '#2a9a7a', face = b.vx < 0 || (boss.act && p.x < b.x) ? -1 : 1;
+      if (face < 0) { g.translate(46, 0); g.scale(-1, 1); }
+      g.fillStyle = '#12302a'; g.beginPath(); g.moveTo(8, 14); g.lineTo(-10, 0); g.lineTo(-4, 18); g.lineTo(-12, 26); g.lineTo(8, 30); g.fill(); // kanat
+      g.fillStyle = c; g.fillRect(6, 12, 34, 30); g.fillRect(10, 6, 30, 10); g.fillStyle = c2; g.fillRect(6, 12, 34, 4);
+      g.fillStyle = '#e8d8a0'; g.fillRect(14, 26, 20, 16); g.fillStyle = '#c8b880'; for (let k = 0; k < 4; k++) g.fillRect(14, 29 + k * 4, 20, 1);
+      g.fillStyle = '#f4d03f'; g.beginPath(); g.moveTo(12, 8); g.lineTo(8, -6); g.lineTo(18, 6); g.lineTo(26, -10); g.lineTo(30, 6); g.lineTo(40, -4); g.lineTo(38, 10); g.fill(); // boynuz/taç
+      const fl2 = (frame >> 2) & 1; g.fillStyle = fl2 ? '#ff7a1a' : '#e8410f'; g.beginPath(); g.moveTo(14, 4); g.lineTo(18, -14 - fl2 * 3); g.lineTo(24, 2); g.lineTo(30, -16 + fl2 * 3); g.lineTo(34, 4); g.fill();
+      g.fillStyle = '#fff'; g.fillRect(28, 14, 9, 7); g.fillStyle = '#e11d48'; g.fillRect(32, 15, 4, 5); g.fillStyle = '#111'; g.fillRect(27, 11, 12, 2); // göz + kaş
+      g.fillStyle = '#111'; g.fillRect(30, 26, 14, 8); g.fillStyle = '#fff'; for (let k = 0; k < 4; k++) g.fillRect(31 + k * 3, 26, 2, 3);
+      if (b.atk === 'fire' && b.atkT > 10) { g.fillStyle = '#ffb02e'; g.fillRect(44, 28, 6, 4); }
+      g.fillStyle = '#12302a'; g.fillRect(10, 40, 10, 4); g.fillRect(28, 40, 10, 4); g.fillStyle = c2; g.beginPath(); g.moveTo(6, 30); g.lineTo(-8, 34); g.lineTo(6, 38); g.fill(); // kuyruk
+    } else {
+      g.translate(x0, y0 + b.h); g.scale(b.w / 30, b.h / 30); g.translate(0, -30 + wob);
+      const col = fl ? '#fff' : tele ? '#ff9a3a' : sp.pal[0], hi = fl ? '#fff' : sp.pal[1], gold = sp.pal[2];
+      g.fillStyle = col; g.fillRect(1, 6, 28, 24); g.fillRect(4, 2, 22, 6); g.fillStyle = hi; g.fillRect(1, 6, 28, 3);
+      if (sp.acc === 0) { g.fillStyle = gold; g.fillRect(6, -2, 3, 6); g.fillRect(13, -5, 4, 9); g.fillRect(21, -2, 3, 6); g.fillRect(6, 3, 18, 2); }
+      else if (sp.acc === 1) { g.fillStyle = '#eee'; g.beginPath(); g.moveTo(4, 4); g.lineTo(0, -8); g.lineTo(9, 3); g.fill(); g.beginPath(); g.moveTo(26, 4); g.lineTo(30, -8); g.lineTo(21, 3); g.fill(); }
+      else { g.fillStyle = gold; for (let k = 0; k < 4; k++) { g.beginPath(); g.moveTo(5 + k * 6, 3); g.lineTo(8 + k * 6, -6); g.lineTo(11 + k * 6, 3); g.fill(); } }
+      g.fillStyle = '#fff'; g.fillRect(6, 11, 7, 6); g.fillRect(17, 11, 7, 6); g.fillStyle = '#e11d48'; g.fillRect(9, 13, 3, 4); g.fillRect(18, 13, 3, 4);
+      g.fillStyle = '#111'; g.fillRect(5, 9, 9, 2); g.fillRect(16, 9, 9, 2);
+      g.fillStyle = '#111'; g.fillRect(7, 21, 16, 6); g.fillStyle = '#fff'; for (let k = 0; k < 4; k++) g.fillRect(8 + k * 4, 21, 2, 3);
+      if (sp.fake) {
+        const rr = b.hp / b.max;
+        if (rr < .67) { g.fillStyle = '#c99a5a'; g.fillRect(20, 17, 9, 12); g.fillStyle = '#a97a3a'; for (let k = 0; k < 4; k++) g.fillRect(20, 19 + k * 3, 9, 1); }
+        if (rr < .34) { g.fillStyle = '#c99a5a'; g.fillRect(1, 6, 12, 14); g.fillStyle = '#a97a3a'; for (let k = 0; k < 5; k++) g.fillRect(1, 8 + k * 3, 12, 1); g.fillStyle = '#fff'; g.fillRect(5, 11, 3, 3); g.fillStyle = '#111'; g.fillRect(6, 12, 1, 2); }
+        g.fillStyle = '#e8d8a0'; g.fillRect(11, -1, 9, 2);
+      } else { g.fillStyle = gold; g.fillRect(12, 28, 6, 2); }
+    }
+    g.restore();
+    if (b.say > 0 && ((b.say >> 3) & 1 || b.say < 110)) { g.fillStyle = '#fff'; g.fillRect(x0 - 14, y0 - 34, 76, 12); g.fillStyle = '#111'; g.font = 'bold 8px monospace'; g.textAlign = 'center'; g.fillText(sp.final ? 'BEN KRALIM!' : sp.fake ? 'BEN BOSSUM!' : 'GEÇEMEZSİN!', x0 + 24, y0 - 25); g.textAlign = 'left'; }
+  }
+  function drawShots() {
+    for (const q of bshots) {
+      const x = Math.round(q.x - cam), y = Math.round(q.y), f = (frame >> 1) & 1;
+      if (q.k === 'warn') { if ((q.t >> 2) & 1) { g.fillStyle = '#ff3b3b'; g.beginPath(); g.moveTo(x - 6, 156); g.lineTo(x + 6, 156); g.lineTo(x, 146); g.fill(); } }
+      else if (q.k === 'meteor') { g.fillStyle = '#ff7a1a'; g.fillRect(x + 1, y - 10, 6, 10); g.fillStyle = '#6a3a1a'; g.fillRect(x, y, 8, 12); g.fillStyle = '#ffd23a'; g.fillRect(x + 2, y + 2, 3, 4); }
+      else if (q.k === 'wave') { g.fillStyle = f ? '#ff7a1a' : '#e8410f'; g.fillRect(x, y, 12, 8); g.fillStyle = '#ffd23a'; g.fillRect(x + 3, y + 3 + f, 6, 4); g.fillRect(x + 5, y, 2, 3); }
+      else { g.fillStyle = '#e11d48'; g.fillRect(x, y + 1, 8, 6); g.fillRect(x + 1, y, 6, 8); g.fillStyle = f ? '#ffd23a' : '#ff7a1a'; g.fillRect(x + 2, y + 2, 4, 4); }
+    }
   }
   function itemSprite(it) {
     const x = Math.round(it.x - cam), y = Math.round(it.y);
@@ -684,6 +783,7 @@ window.startLekoBros = function (host, onExit, startLevel, opts) {
       g.fillStyle = c[2]; g.fillRect(x + (w ? 0 : 2), y + 10, 4, 2); g.fillRect(x + (w ? 8 : 6), y + 10, 4, 2);
     }
     if (boss && !boss.dead) drawBoss();
+    drawShots();
     for (const f of fireballs) { const fx = Math.round(f.x - cam), fy = Math.round(f.y); g.fillStyle = '#e11d48'; g.fillRect(fx, fy + 1, 6, 4); g.fillRect(fx + 1, fy, 4, 6); g.fillStyle = (frame >> 1) & 1 ? '#ffd23a' : '#ff7a1a'; g.fillRect(fx + 2, fy + 2, 2, 2); }
     parts.forEach(q => { g.fillStyle = q.c || th.bk; g.fillRect(Math.round(q.x - cam), Math.round(q.y), 6, 6); g.fillStyle = q.c ? '#6b4a22' : th.bl; g.fillRect(Math.round(q.x - cam), Math.round(q.y) + 5, 6, 1); });
     if (state !== 'dead' || p.dieT > 0) player();
@@ -692,7 +792,8 @@ window.startLekoBros = function (host, onExit, startLevel, opts) {
     g.fillStyle = 'rgba(0,0,0,.35)'; g.fillRect(0, 0, W, 14);
     g.fillStyle = '#fff'; g.font = 'bold 9px monospace';
     g.fillText('LEKO ' + String(score).padStart(6, '0') + '   ● x' + String(coins).padStart(2, '0') + '   1-' + (lv + 1) + '   ♥ ' + Math.max(0, lives) + '   ⏱ ' + Math.max(0, time), 6, 10);
-    if (bossMsg > 0) { g.fillStyle = 'rgba(0,0,0,.6)'; g.fillRect(0, 150, W, 26); g.fillStyle = '#ffd23a'; g.font = 'bold 11px monospace'; g.textAlign = 'center'; g.fillText('SAHTE BOSS! KARTONMUŞ :)', W / 2, 167); g.textAlign = 'left'; }
+    if (boss && boss.act && !boss.dead) { const bb = boss, bw = 200, bx = (W - bw) / 2; g.fillStyle = 'rgba(0,0,0,.55)'; g.fillRect(bx - 2, 16, bw + 4, 14); g.fillStyle = '#400'; g.fillRect(bx, 18, bw, 6); g.fillStyle = bb.spec.final ? '#ffb02e' : '#e11d48'; g.fillRect(bx, 18, Math.round(bw * Math.max(0, bb.hp) / bb.max), 6); g.fillStyle = '#fff'; g.font = 'bold 7px monospace'; g.textAlign = 'center'; g.fillText(bb.spec.name, W / 2, 28); g.textAlign = 'left'; }
+    if (bossMsg > 0) { g.fillStyle = 'rgba(0,0,0,.6)'; g.fillRect(0, 150, W, 26); g.fillStyle = '#ffd23a'; g.font = 'bold 11px monospace'; g.textAlign = 'center'; g.fillText(bossTxt, W / 2, 167); g.textAlign = 'left'; }
     if (pw > 0) { g.fillStyle = pw === 2 ? '#ffd23a' : '#e11d48'; g.font = 'bold 8px monospace'; g.textAlign = 'right'; g.fillText(pw === 2 ? 'ATEŞ  [X]' : 'BÜYÜK', W - 4, 10); }
     g.textAlign = 'center';
     if (introT > 0) {
@@ -724,6 +825,6 @@ window.startLekoBros = function (host, onExit, startLevel, opts) {
       document.removeEventListener('pointerup', pu); document.removeEventListener('pointercancel', pu);
       try { ac && ac.close(); } catch (e) {} cv.remove(); pad.remove();
     },
-    _state: () => ({ p, state, score, coins, lives, enemies, map, lv, COLS, FLAGX, time, th, pw, items, fireballs, inv, keepPw, boss, gateList }), _keys: keys, _pw: n => { pw = n; keepPw = n; if (n > 0 && p.h < 24) { p.h = 24; p.y -= 10; } }
+    _state: () => ({ p, state, score, coins, lives, enemies, map, lv, COLS, FLAGX, time, th, pw, items, fireballs, inv, keepPw, boss, gateList, bshots, cp }), _keys: keys, _pw: n => { pw = n; keepPw = n; if (n > 0 && p.h < 24) { p.h = 24; p.y -= 10; } }
   };
 };

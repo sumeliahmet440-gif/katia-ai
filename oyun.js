@@ -1,5 +1,5 @@
 /* Katia AI – oyun.js
-   1) OYUN modu (mario · 25 bölüm)   2) Uygulama ekle + ana ekran kısayolları
+   1) OYUN modu (mario · 30 bölüm)   2) Uygulama ekle + ana ekran kısayolları
    3) İzinler + cihaz eylemleri (YouTube, Spotify, not, takvim, arama…)   4) Notlar
    5) Leko modu ek komutları + duyuru   6) Daha korkunç gizli mod (???) */
 (() => {
@@ -45,9 +45,9 @@ function normUrl(u) {
    ============================================================= */
 P.oyun = {
   n: 'OYUN', a: '#22c55e', b: '#fde047', bg: '#03070a', orb: 'ring', v: { t: 'male' },
-  d: 'Oyun modu. "mario" yaz, 25 bölümlük platform oyunu açılsın.',
-  sys: 'Adın OYUN. Eğlenceli, enerjili bir oyun arkadaşısın; kullanıcıya "oyuncu" diye hitap et. Kısa konuş. Kullanıcı oyun oynamak isterse ona şunu söyle: "mario" yazarsa 25 bölümlü platform oyunu açılır.',
-  hello: 'Oyun modu açık! "mario" yaz, 25 bölümlük maceraya hemen başlayalım.',
+  d: 'Oyun modu. "mario" yaz, 30 bölümlük platform oyunu açılsın.',
+  sys: 'Adın OYUN. Eğlenceli, enerjili bir oyun arkadaşısın; kullanıcıya "oyuncu" diye hitap et. Kısa konuş. Kullanıcı oyun oynamak isterse ona şunu söyle: "mario" yazarsa 30 bölümlü platform oyunu açılır.',
+  hello: 'Oyun modu açık! "mario" yaz, 30 bölümlük maceraya hemen başlayalım.',
   nokey: 'Oyuncu, API anahtarı yok ama oyun anahtarsız çalışır. "mario" yaz!',
   made: 'LekoStudio tarafından yapıldım oyuncu!',
   warn: 'Oyuncu, Ultron modu oyun değil. Kullanma.'
@@ -55,7 +55,7 @@ P.oyun = {
 BUILTIN.push('oyun');
 
 const GAMES = {
-  mario: { t: 'LEKO BROS · 25 BÖLÜM', say: 'Mario tarzı platform oyunu açılıyor: 25 bölüm var; mantarla büyü, ateş çiçeğiyle ateş topu at. Ok tuşları ve boşluk, ya da ekrandaki düğmeler.', help: 'Yürü: ← → (veya A D) · Zıpla: ↑ / Boşluk · Telefonda ekrandaki düğmeler · Düşmanın üstüne zıpla (dikenlilere zıplama!), ? bloklara aşağıdan vur: mantar seni büyütür (tuğla kırarsın), ateş çiçeği alınca X / F / Shift (telefonda ATEŞ düğmesi) ile ateş topu atarsın. Hasar alınca önce küçülürsün. Sondaki bayrağa ulaş. Bölüm bitince dokun / Enter ile sonrakine geç.' }
+  mario: { t: 'LEKO BROS · 30 BÖLÜM', say: 'Mario tarzı platform oyunu açılıyor: 30 bölüm var; mantarla büyü, ateş çiçeğiyle ateş topu at. Ok tuşları ve boşluk, ya da ekrandaki düğmeler.', help: 'Yürü: ← → (veya A D) · Zıpla: ↑ / Boşluk · Telefonda ekrandaki düğmeler · Düşmanın üstüne zıpla (dikenlilere zıplama!), ? bloklara aşağıdan vur: mantar seni büyütür (tuğla kırarsın), ateş çiçeği alınca X / F / Shift (telefonda ATEŞ düğmesi) ile ateş topu atarsın. Hasar alınca önce küçülürsün. Her bölümün sonunda kapıyı tutan bir BOSS var: üstüne zıpla (2 hasar) ya da ateş topu at (1 hasar), ateşlerden/dalgalardan/meteorlardan kaç. Bossu yenince kapı açılır, bayrağa ulaş. Bölüm bitince dokun / Enter ile sonrakine geç.' }
 };
 let curGame = null, marioRun = null;
 (function buildGameUi() {
@@ -383,7 +383,7 @@ window.handle = async function (text, img) {
   if (isBan() || !t || img || (typeof pendImg !== 'undefined' && pendImg)) return _handle.apply(this, arguments);
   if (typeof busy !== 'undefined' && busy) return;
   const gc = gameCmd(t);
-  if (gc === 'menu') { await own(t, 'Oyun: mario (25 bölüm). Yaz ya da alttaki düğmeye bas.'); return; }
+  if (gc === 'menu') { await own(t, 'Oyun: mario (30 bölüm). Yaz ya da alttaki düğmeye bas.'); return; }
   if (gc) { await own(t, ''); openGame(gc); say(GAMES[gc].say, true); return; }
   if (S.persona === 'leko') { const r = await lekoCmd(t); if (r !== undefined) { await own(t, r); return; } }
   const q = quickAct(t);
@@ -401,7 +401,7 @@ window.handle = async function (text, img) {
 const _sys = window.sysPrompt;
 window.sysPrompt = function () {
   let s = _sys.apply(this, arguments);
-  if (S.persona === 'oyun') s += ' Oyun modundasın: "mario" yazılırsa 25 bölümlü platform oyunu açılır; kullanıcıya bunu hatırlat.';
+  if (S.persona === 'oyun') s += ' Oyun modundasın: "mario" yazılırsa 30 bölümlü platform oyunu açılır; kullanıcıya bunu hatırlat.';
   if (S.act && S.act.on) s += ' Kullanıcı cihaz izinlerini açtı: "youtubede X aç", "spotifyda X çal", "not al: X", "takvime ekle", "X ara", "X haritada aç" gibi komutlarla cihazında iş yaptırabilir; gerekirse bunu hatırlat.';
   return s;
 };
