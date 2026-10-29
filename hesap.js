@@ -7,6 +7,7 @@ let did=ls('katia_did','');
 if(!/^[a-f0-9]{32}$/.test(did)){did=rndHex(16);sv('katia_did',did)}
 window.KDID=did;
 
+window.LEKO_GCFG=ls('katia_gcfg',{})||{};
 let ME=ls('katia_me',null),IS_ADMIN=false,IS_OWNER=false,BANNED=false,booted=false;
 
 async function api(route,body,ms){
@@ -90,6 +91,7 @@ function applyMe(j,first){
  ME={name:j.name,key:j.key};sv('katia_me',ME);
  $('#meN').textContent=j.name;
  IS_ADMIN=!!j.admin;IS_OWNER=!!j.owner;
+ if(j.gcfg&&typeof j.gcfg==='object'){window.LEKO_GCFG=j.gcfg;sv('katia_gcfg',j.gcfg)}
  if(j.banned){showBan(j.banReason);return}
  if(BANNED)hideBan();
  if(first&&!S.uname){S.uname=j.name;save()}
@@ -149,6 +151,14 @@ function updUI(){
 }
 const _apply=window.apply;
 window.apply=function(){_apply();updUI()};
+
+/* ---------- oyun düzenleme modu (Leko modu açıkken) ---------- */
+window.lekoEditAllowed=()=>IS_ADMIN&&S.persona==='leko';
+window.gameCfgSave=async cfg=>{
+ const r=await api('admin/oyun',{cfg});
+ if(r.status===200&&r.j.gcfg){window.LEKO_GCFG=r.j.gcfg;sv('katia_gcfg',r.j.gcfg)}
+ return r;
+};
 
 /* ---------- Leko şifre ---------- */
 async function autoAdmin(){ // bu cihazda şifre kayıtlıysa sessizce gir

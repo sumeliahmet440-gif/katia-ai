@@ -39,3 +39,10 @@ Render ücretsiz planda dosyalar her yeniden başlatmada silinir; isimler ve ban
 - **Ayarlar → İZİNLER**: ana şalter + kategoriler. Açıkken: "youtubede X aç", "spotifyda X çal", "not al: …", "yarın saat 15:00 toplantı takvime ekle", "5551234567 ara", "X haritada aç". Anlaşılamayan işler için (ek istek harcar) yapay zeka eylemi seçer.
 - **Leko modu**: "istatistik", "kimler çevrimiçi", "duyur: …", "mesaj isim: …", "banla isim", "ban kaldır isim", "hesapla", "şifre üret", "zar at"; Yönetim panelinde DUYURU düğmesi.
 - **???** gizli modu: kalp atışı, uğultu, gözler, kararma, ani yüz. Ayarlar → MOD AYARLARI'ndan kapatılabilir.
+
+
+## Oyun düzenleme modu (sadece Leko modu açıkken)
+- Oyun açıkken klavyede **X tuşuna 3 kez hızlıca** basınca düzenleme paneli açılır (Leko modunda ve yönetici hesabıyla; aksi halde hiçbir şey olmaz). Oyun panel açıkken durur.
+- Bölüm seç; alanlar: düşman sayısı çarpanı, düşman hızı, boss can çarpanı, boss saldırı hızı, süre, yerçekimi, zıplama gücü, oyuncu hızı, kaygan zemin, güç blokları (kapatınca mantar/çiçek çıkmaz). Boş bırakılan alan varsayılandır.
+- **KAYDET (HERKESE)**: ayarlar sunucuda saklanır, tüm oyunculara yansır (en geç ~30 sn; oyun yeniden başlayınca/bölüm yüklenince geçerli). Ayarlı bölümde sol üstte "AYARLI" yazar. **KAYDET + BÖLÜME GİT** seçilen bölümü hemen başlatır.
+- Sunucu değerleri güvenli aralığa sıkıştırır (ör. düşman çarpanı en çok 4, süre 30-999). Sadece yöneticiler kaydedebilir. Kalıcı olması için Upstash Redis bağlı olmalı (yukarıdaki bölüm), yoksa Render yeniden başlayınca ayarlar silinir.

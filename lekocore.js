@@ -108,7 +108,7 @@ function createCore(store) {
   const me = u => ({
     ok: true, registered: true, name: u.name, key: u.key, banned: !!u.banned, banReason: u.banReason || '',
     admin: !!u.admin, owner: db.owner === u.key,
-    settings: u.banned ? null : (u.settings || null), ver: u.ver || 0, lock: !!u.lock, msg: u.msg || '', msgId: u.msgId || 0, ann: db.ann || null
+    settings: u.banned ? null : (u.settings || null), ver: u.ver || 0, lock: !!u.lock, msg: u.msg || '', msgId: u.msgId || 0, ann: db.ann || null, gcfg: db.gcfg || {}, gver: db.gver || 0
   });
   const pub = u => ({
     key: u.key, name: u.name, created: u.created, last: u.last || 0, banned: !!u.banned, banReason: u.banReason || '',
@@ -197,6 +197,20 @@ function createCore(store) {
         if (typeof b.msg === 'string' && b.msg.trim()) { t.msg = clip(b.msg, 300); t.msgId = Date.now(); }
         touch();
         return res(200, { ok: true, user: pub(t) });
+      }
+      case 'admin/oyun': { // oyun düzenleme modu: bölüm başına zorluk ayarları, herkese yansır
+        const a = adminOf(did); if (!a) return err(403, 'Yetkin yok.');
+        const inC = b.cfg; if (!inC || typeof inC !== 'object') return err(400, 'Ayar yok.');
+        const LIM = { den: [0, 4], spd: [.3, 4], bossHp: [.1, 20], bossAtk: [.3, 4], time: [30, 999], grav: [.08, .6], jump: [3, 9], pspd: [.8, 3.5], slip: [0, 1], pow: [0, 1] };
+        const out = {};
+        for (const lv of Object.keys(inC).slice(0, 80)) {
+          if (!/^\d{1,2}$/.test(lv) || +lv < 1 || +lv > 99 || !inC[lv] || typeof inC[lv] !== 'object') continue;
+          const o = {};
+          for (const k in LIM) { const v = inC[lv][k]; if (typeof v === 'number' && isFinite(v)) o[k] = Math.round(clamp(v, LIM[k][0], LIM[k][1]) * 1000) / 1000; }
+          if (Object.keys(o).length) out[lv] = o;
+        }
+        db.gcfg = out; db.gver = (db.gver || 0) + 1; touch();
+        return res(200, { ok: true, gcfg: db.gcfg, gver: db.gver });
       }
       case 'admin/duyuru': {
         const a = adminOf(did); if (!a) return err(403, 'Yetkin yok.');

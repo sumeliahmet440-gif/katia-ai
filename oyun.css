@@ -68,3 +68,10 @@ body.gzx #app{animation:gzflk 7s steps(1) infinite}
 @keyframes gzflash{0%{background:#fff}100%{background:#000}}
 @media (prefers-reduced-motion:reduce){#gzFx .gzv,#gzFx .gzs,body.gzx #app,body.gzx #pname{animation:none}}
 .mpad button.mf{width:72px;font-size:12px;letter-spacing:.06em;background:rgba(255,120,30,.22);border-color:rgba(255,160,60,.6)}
+
+.medit{position:fixed;z-index:9999;left:50%;top:50%;transform:translate(-50%,-50%);width:min(560px,94vw);max-height:92vh;overflow:auto;background:#10131c;border:2px solid #7ee0ff;border-radius:12px;padding:14px;color:#fff;font:13px/1.4 system-ui,sans-serif;box-shadow:0 10px 40px #000}
+.medit .mehd{display:flex;flex-direction:column;gap:2px;margin-bottom:10px}.medit .mehd b{font-size:16px;color:#7ee0ff;letter-spacing:.08em}.medit .mehd span{font-size:11px;opacity:.7}
+.medit label{display:flex;flex-direction:column;gap:3px;font-size:11px;opacity:.95}.medit .megrid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0}
+.medit input,.medit select{background:#1b2030;color:#fff;border:1px solid #3a4560;border-radius:6px;padding:6px 8px;font-size:13px}
+.medit .mebt{display:flex;flex-wrap:wrap;gap:6px}.medit button{background:#1f3a52;color:#fff;border:1px solid #7ee0ff;border-radius:8px;padding:8px 10px;font-size:11px;cursor:pointer}.medit button:hover{background:#2a5578}
+.medit .mest{margin-top:8px;font-size:11px;min-height:14px;color:#ffd23a}
