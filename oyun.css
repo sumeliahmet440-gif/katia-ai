@@ -17,6 +17,34 @@ body.p-oyun #gmBar{display:flex}
 .mpad button{width:72px;height:72px;border-radius:50%;font-size:24px;background:rgba(255,255,255,.12);border:2px solid rgba(255,255,255,.35);color:#fff;padding:0;touch-action:none;user-select:none;-webkit-user-select:none}
 .mpad button.mj{width:96px;font-size:13px;letter-spacing:.1em}
 @media (pointer:coarse),(max-width:760px){.mpad{display:flex}}
+/* dokunma: seçme/uzun basma/çift dokunma yakınlaştırması kapalı, düğme basılı görünümü */
+#gm{-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;overscroll-behavior:none}
+.mpad button{-webkit-tap-highlight-color:transparent;-webkit-touch-callout:none;transition:none}
+.mpad button.on{background:rgba(255,255,255,.34);border-color:#fff}
+.mpad button.mf.on{background:rgba(255,140,40,.5)}
+.mrot{display:none;position:absolute;inset:0;z-index:8;background:rgba(0,0,0,.94);color:#fff;flex-direction:column;align-items:center;justify-content:center;gap:12px;font:700 18px/1.3 system-ui,sans-serif;text-align:center;padding:20px}
+.mrot .mri{font-size:64px;animation:mrot 1.8s ease-in-out infinite}
+@keyframes mrot{0%,20%{transform:rotate(0)}60%,100%{transform:rotate(-90deg)}}
+/* telefon DİKEY: oyun durur, yatay çevirmesi istenir */
+@media (orientation:portrait) and (pointer:coarse){.mrot{display:flex}.mpad{display:none}}
+/* telefon YATAY: oyun tüm yüksekliği kullanır; üst çubuk ve yardım yazısı gizlenir, düğmeler kenarlarda büyük */
+@media (orientation:landscape) and (pointer:coarse){
+  #gm{padding-top:0}
+  #gmHelp,#gmT,#gmTop .sp{display:none}
+  #gmTop{position:absolute;top:max(4px,env(safe-area-inset-top));right:max(6px,env(safe-area-inset-right));z-index:7;padding:0;border:0;background:none}
+  #gmTop button{padding:4px 10px;font-size:11px;opacity:.55;background:rgba(0,0,0,.5)}
+  .mcv{width:min(100%,calc(100vh * 320 / 192));width:min(100%,calc(100dvh * 320 / 192));max-height:100%}
+  .mpad{padding:0 max(16px,env(safe-area-inset-right)) calc(8px + env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left))}
+  .mpad button{width:76px;height:76px;font-size:26px}
+  .mpad button.mj{width:104px;font-size:14px}
+  .mpad button.mf{width:76px}
+  .mpad>div{gap:14px}
+}
+@media (orientation:landscape) and (pointer:coarse) and (max-height:420px){
+  .mpad button{width:68px;height:68px}
+  .mpad button.mj{width:92px}
+  .mpad button.mf{width:68px}
+}
 
 /* ---------- ana ekran uygulamaları ---------- */
 #homeApps{display:flex;gap:10px;overflow-x:auto;padding:6px 20px 8px;scrollbar-width:none;-webkit-overflow-scrolling:touch}

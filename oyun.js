@@ -78,10 +78,24 @@ function openGame(id) {
   const body = $('#gmBody'); body.innerHTML = '';
   marioRun = window.startLekoBros(body);
   $('#gm').classList.add('on');
+  lockLandscape();
+}
+// telefonda: tam ekran + yatay kilit (destekleyen tarayıcılarda; iOS Safari'de dikeyken "yatay çevir" yazısı çıkar)
+function lockLandscape() {
+  try {
+    if (!window.matchMedia || !matchMedia('(pointer:coarse)').matches) return;
+    const el = document.documentElement, fs = el.requestFullscreen ? el.requestFullscreen({ navigationUI: 'hide' }) : Promise.resolve();
+    Promise.resolve(fs).catch(() => {}).then(() => { try { const o = screen.orientation; if (o && o.lock) return o.lock('landscape'); } catch (e) {} }).catch(() => {});
+  } catch (e) {}
+}
+function unlockLandscape() {
+  try { if (screen.orientation && screen.orientation.unlock) screen.orientation.unlock(); } catch (e) {}
+  try { if (document.fullscreenElement && document.exitFullscreen) document.exitFullscreen().catch(() => {}); } catch (e) {}
 }
 function unlockSafe() { try { unlockSpeech(); } catch (e) {} }
 function closeGame(keep) {
   if (marioRun) { marioRun.stop(); marioRun = null; }
+  if (keep !== true) unlockLandscape();
   $('#gmBody').innerHTML = ''; $('#gm').classList.remove('on'); curGame = null;
   if (keep !== true) afterOwn();
 }

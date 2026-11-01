@@ -7,16 +7,31 @@ window.startLekoBros = function (host, onExit, startLevel, opts) {
   const SEEDS = (opts && opts.seeds) || null; // sadece test: bölüm üretici tohumlarını değiştirir
   const W = 320, H = 192, T = 16, ROWS = 12, LAVA = 172;
   const cv = document.createElement('canvas'); cv.width = W; cv.height = H; cv.className = 'mcv';
-  const g = cv.getContext('2d'); g.imageSmoothingEnabled = false;
+  // alpha:false + desynchronized: telefonda daha az gecikme ve daha az güç harcaması
+  const g = cv.getContext('2d', { alpha: false, desynchronized: true }) || cv.getContext('2d'); g.imageSmoothingEnabled = false;
   host.appendChild(cv);
 
   /* ---- dokunmatik düğmeler ---- */
   const pad = document.createElement('div'); pad.className = 'mpad';
   pad.innerHTML = '<div><button data-k="left">◀</button><button data-k="right">▶</button></div><div><button data-k="fire" class="mf">ATEŞ</button><button data-k="jump" class="mj">ZIPLA</button></div>';
   host.appendChild(pad);
+  const rot = document.createElement('div'); rot.className = 'mrot'; rot.innerHTML = '<div class="mri">↻</div><div>Telefonu yatay çevir</div>';
+  host.appendChild(rot);
 
   const keys = { left: false, right: false, jump: false, fire: false };
-  const KM = { ArrowLeft: 'left', a: 'left', A: 'left', ArrowRight: 'right', d: 'right', D: 'right', ArrowUp: 'jump', w: 'jump', W: 'jump', ' ': 'jump', z: 'jump', Z: 'jump', x: 'fire', X: 'fire', f: 'fire', F: 'fire', Shift: 'fire' };
+  /* ---- girdi: her eylemin kendi "basılı kaynakları" var (tuş kodu ya da parmak numarası).
+     Bir tuş / parmak bırakılınca sadece kendi payı düşer; diğer tuşlar ve parmaklar çalışmaya devam eder. ---- */
+  const held = { left: new Set(), right: new Set(), jump: new Set(), fire: new Set() };
+  const padBtns = [...pad.querySelectorAll('[data-k]')];
+  const lit = () => padBtns.forEach(b => b.classList.toggle('on', !!keys[b.dataset.k]));
+  const press = (a, src) => { held[a].add(src); keys[a] = true; };
+  const release = (a, src) => { held[a].delete(src); keys[a] = held[a].size > 0; };
+  const ptr = new Map(); // parmak (pointerId) -> şu an bastığı düğme
+  const releaseAll = () => { for (const a in held) { held[a].clear(); keys[a] = false; } ptr.clear(); lit(); };
+  const KC = { ArrowLeft: 'left', KeyA: 'left', ArrowRight: 'right', KeyD: 'right', ArrowUp: 'jump', KeyW: 'jump', Space: 'jump', KeyZ: 'jump', KeyX: 'fire', KeyF: 'fire', ShiftLeft: 'fire', ShiftRight: 'fire' };
+  const KM = { arrowleft: 'left', a: 'left', arrowright: 'right', d: 'right', arrowup: 'jump', w: 'jump', ' ': 'jump', z: 'jump', x: 'fire', f: 'fire', shift: 'fire' };
+  const keyAct = e => KC[e.code] || KM[String(e.key || '').toLowerCase()];
+  const keySrc = e => (e.code && e.code !== 'Unidentified') ? e.code : e.key;
   let state = 'play', raf = 0, last = 0, acc = 0, alive = true;
   const xT = [];
   const kd = e => {
@@ -29,16 +44,31 @@ window.startLekoBros = function (host, onExit, startLevel, opts) {
         hintT = 180; // yetki yok: nedenini göster
       }
     }
-    const k = KM[e.key];
-    if (k) { keys[k] = true; e.preventDefault(); e.stopPropagation(); }
+    const k = keyAct(e);
+    if (k) { press(k, keySrc(e)); e.preventDefault(); e.stopPropagation(); }
     if ((e.key === 'Enter' || e.key === ' ') && (state === 'over' || state === 'win')) advance();
   };
-  const ku = e => { if (editOpen) return; const k = KM[e.key]; if (k) { keys[k] = false; e.preventDefault(); e.stopPropagation(); } };
+  const ku = e => { if (editOpen) return; const k = keyAct(e); if (k) { release(k, keySrc(e)); e.preventDefault(); e.stopPropagation(); } };
   document.addEventListener('keydown', kd, true); document.addEventListener('keyup', ku, true);
-  const pd = e => { const b = e.target.closest('[data-k]'); if (b) { keys[b.dataset.k] = true; e.preventDefault(); sfx(0); } };
-  const pu = e => { Object.keys(keys).forEach(k => keys[k] = false); };
-  pad.addEventListener('pointerdown', pd); document.addEventListener('pointerup', pu); document.addEventListener('pointercancel', pu);
+  // dokunmatik / fare: çoklu parmak, düğmeler arasında kaydırma, her parmak bağımsız
+  const btnAt = (x, y) => { const el = document.elementFromPoint(x, y), b = el && el.closest && el.closest('[data-k]'); return b && pad.contains(b) ? b.dataset.k : null; };
+  const pset = (id, a) => {
+    const old = ptr.get(id); if (old === a) return;
+    if (old) release(old, 'p' + id);
+    if (a) { ptr.set(id, a); press(a, 'p' + id); } else ptr.delete(id);
+    lit();
+  };
+  const pd = e => { if (state === 'over' || state === 'win') advance(); const a = btnAt(e.clientX, e.clientY); if (a) { e.preventDefault(); sfx(0); pset(e.pointerId, a); } };
+  const pm = e => { if (ptr.has(e.pointerId)) pset(e.pointerId, btnAt(e.clientX, e.clientY)); };
+  const pu = e => { if (ptr.has(e.pointerId)) pset(e.pointerId, null); }; // sadece bırakılan parmağın düğmesi
+  const noMenu = e => e.preventDefault();
+  pad.addEventListener('pointerdown', pd); document.addEventListener('pointermove', pm); document.addEventListener('pointerup', pu); document.addEventListener('pointercancel', pu);
+  pad.addEventListener('contextmenu', noMenu); cv.addEventListener('contextmenu', noMenu);
+  const onHide = () => { if (document.hidden) releaseAll(); };
+  window.addEventListener('blur', releaseAll); document.addEventListener('visibilitychange', onHide);
   cv.addEventListener('pointerdown', () => { if (state === 'over' || state === 'win') advance(); });
+  const portraitMQ = window.matchMedia ? window.matchMedia('(orientation: portrait) and (pointer: coarse)') : null;
+  let wasPortrait = false;
 
   /* ---- ses (küçük bip'ler) ---- */
   let ac = null;
@@ -364,6 +394,7 @@ window.startLekoBros = function (host, onExit, startLevel, opts) {
   let map, enemies, popups, p, cam, score, coins, lives = 3, time, frame;
   let boss = null, bossMsg = 0, bossTxt = '', gateList = [], bshots = [], arenaPows = [], cp = 0, ARS = 0;
   const ARENA = 46;
+  const FINAL_HP = 400; // 1-30 Kral Ejderha canı: 2 hasarlı ezmeyle ~200 ezme, ateş topuyla 400 isabet. Ölür ama neredeyse imkansız. (Düzenleme modundaki "Boss can çarpanı" bununla çarpılır)
   const cfgNow = () => ((window.LEKO_GCFG || {})[lv + 1]) || {}; // Leko düzenleme modundan gelen bölüm ayarları (herkese yansır)
   let paused = false, editOpen = false, hintT = 0;
   let items = [], fireballs = [], parts = [], pw = 0, keepPw = 0, inv = 0; // pw: 0 küçük · 1 büyük · 2 ateş
@@ -377,9 +408,11 @@ window.startLekoBros = function (host, onExit, startLevel, opts) {
     for (let r = 2; r <= 9; r++) { put(gx, r, 4); gateList.push([gx, r]); }
     const pp = final ? [8, 12, 16, 20] : [9, 14, 19]; // güç blokları (boss ilerledikçe yenilenir)
     pp.forEach((o, k) => { put(ax + o, 6, 8); arenaPows.push([ax + o, 6]); });
-    const pat = ['walk', 'fire']; if (n >= 6) pat.push('stomp'); if (n >= 11) pat.push('summon'); if (n >= 16) pat.push('rain'); if (n >= 21) pat.push('dash');
+    // güçlendirilmiş bosslar: saldırı çeşitleri daha erken açılır, çekiç yağmuru artık normal bosslarda da var
+    const pat = ['walk', 'fire']; if (n >= 4) pat.push('stomp'); if (n >= 8) pat.push('summon'); if (n >= 12) pat.push('hammer'); if (n >= 14) pat.push('rain'); if (n >= 18) pat.push('dash');
     if (L.fake) { pat.length = 0; pat.push('walk', 'fire', 'stomp', 'summon'); }
-    const sz = final ? 0 : 30 + Math.min(8, Math.floor(n / 3)), hp = Math.max(1, Math.round((final ? 9999 : L.fake ? 26 : 10 + 2 * n) * (cfgNow().bossHp || 1)));
+    // can: eskiden 10+2n (1-29'da 68), şimdi 14+3n (1-29'da 101). Final: FINAL_HP (ölür ama çok zor)
+    const sz = final ? 0 : 30 + Math.min(8, Math.floor(n / 3)), hp = Math.max(1, Math.round((final ? FINAL_HP : L.fake ? 26 : 14 + 3 * n) * (cfgNow().bossHp || 1)));
     const w = final ? 46 : sz, hh = final ? 44 : sz;
     boss = { x: (gx - 10) * T - w / 2, y: 10 * T - hh, w, h: hh, vx: 0, vy: 0, on: false, hp, max: hp, inv: 0, finv: 0, fl: 0, t: 0, act: false, dead: false, say: 0, ax: ax * T, mx: gx * T - w, cd: 70, atk: null, atkT: 0, phase: 0, air: false,
       spec: { name: final ? 'KRAL EJDERHA' : L.fake ? 'SAHTE BOSS' : L.name + ' BOSSU', pat: final ? ['walk', 'fire', 'hammer', 'stomp', 'hammer', 'summon', 'rain', 'dash', 'fire'] : pat, fake: !!L.fake, final, pal: BPAL[n % 6], acc: n % 3 } };
@@ -404,7 +437,14 @@ window.startLekoBros = function (host, onExit, startLevel, opts) {
     };
     L.run(h);
     makeArena(L);
-    enemies = enemies.filter(e => solidAt(Math.floor(e.x / T), Math.floor((e.y + e.h + 8) / T)));
+    // düşman temizliği (1-29 hatası): ① arena girişi ve arenada düşman kalmasın (kontrol noktası = arena girişi; orada bekleyen düşman
+    // yeniden doğan oyuncuyu anında öldürüyordu → canlar saniyeler içinde bitiyordu) ② duvara/merdivene gömülü düşman kalmasın
+    const arenaX = (L.cols - 1) * T;
+    enemies = enemies.filter(e => {
+      if (e.x + e.w > arenaX) return false;
+      for (let ty = Math.floor(e.y / T); ty <= Math.floor((e.y + e.h - 1) / T); ty++) for (let tx = Math.floor(e.x / T); tx <= Math.floor((e.x + e.w - 1) / T); tx++) if (solidAt(tx, ty)) return false;
+      return solidAt(Math.floor(e.x / T), Math.floor((e.y + e.h + 8) / T));
+    });
     const C = cfgNow();
     if (C.den != null && C.den !== 1) {
       if (C.den < 1) enemies = enemies.filter((e, i) => ((i * 0.618) % 1) < C.den);
@@ -419,7 +459,8 @@ window.startLekoBros = function (host, onExit, startLevel, opts) {
     build();
     if (intro) cp = 0;
     p = { x: cp || 2 * T, y: 9 * T - 4, w: 12, h: 14, vx: 0, vy: 0, on: false, dir: 1, held: false, fh: false };
-    pw = keepPw; inv = 0; if (pw > 0) { p.h = 24; p.y -= 10; }
+    pw = keepPw; inv = intro ? 0 : 150; if (pw > 0) { p.h = 24; p.y -= 10; } // yeniden doğunca 2,5 sn dokunulmaz
+    if (!intro) enemies = enemies.filter(e => Math.abs(e.x - p.x) > 56); // doğma noktasının yanında düşman bekleyemez
     cam = 0; time = cfgNow().time || (LEVELS[lv].time + 80); frame = 0; state = 'play'; endT = 0;
     introT = intro ? 100 : 0; if (intro) { lsScore = score; lsCoins = coins; }
   }
@@ -489,7 +530,10 @@ window.startLekoBros = function (host, onExit, startLevel, opts) {
     const b = boss; if (!b || b.dead) return;
     if (!b.act) { if (Math.abs(b.x - p.x) < 300) { b.act = true; b.say = 160; sfx(3); } return; }
     b.t++; if (b.say > 0) b.say--; if (b.inv > 0) b.inv--; if (b.finv > 0) b.finv--; if (b.fl > 0) b.fl--;
-    const sp = b.spec, ratio = b.hp / b.max, r1 = ratio < .5, r2 = ratio < .25, sm = (1 + (1 - ratio) * .5 + (r1 ? .12 : 0) + (sp.final ? .55 : 0)) * (cfgNow().bossAtk || 1);
+    const n = lv + 1, sp = b.spec, ratio = b.hp / b.max, r1 = ratio < .5, r2 = ratio < .25;
+    const lb = sp.final || sp.fake ? 0 : .15 + n * .008; // bölüm ilerledikçe bütün normal bosslar daha hızlı (1-1: +%16, 1-29: +%38)
+    const sm = (1 + (1 - ratio) * .55 + (r1 ? .12 : 0) + (r2 && !sp.fake ? .1 : 0) + (sp.final ? .55 + (r2 ? .25 : 0) : lb)) * (cfgNow().bossAtk || 1);
+    const spd = sp.final ? 1.2 : sp.fake ? 1 : 1 + n * .008; // mermi hızı
     const ph = Math.floor((1 - ratio) * 4); if (ph > b.phase) { b.phase = ph; arenaPows.forEach(([x, y]) => { if (map[y][x] === 6) map[y][x] = 8; }); sfx(7); popups.push({ x: p.x, y: p.y - 10, t: 40 }); }
     const pcx = p.x + p.w / 2, bcx = b.x + b.w / 2, dir = pcx > bcx ? 1 : -1, mouth = b.y + b.h * .45;
     if (b.cd > 0) b.cd--;
@@ -499,11 +543,11 @@ window.startLekoBros = function (host, onExit, startLevel, opts) {
     } else {
       const a = b.atk, t = ++b.atkT; let done = false;
       if (a === 'fire') {
-        b.vx = 0; if (t === 26) { const nn = 1 + (r1 ? 1 : 0) + (r2 ? 1 : 0) + (sp.final ? 1 : 0); for (let k = 0; k < nn; k++) bossShot('fire', bcx + dir * b.w / 2, k % 2 ? 126 : 149, dir * (1.7 + k * .35) * (sp.final ? 1.2 : 1), 0); sfx(6); }
+        b.vx = 0; if (t === 26) { const nn = 1 + (r1 ? 1 : 0) + (r2 ? 1 : 0) + (sp.final ? 1 : 0) + (!sp.final && !sp.fake && n >= 15 ? 1 : 0); for (let k = 0; k < nn; k++) bossShot('fire', bcx + dir * b.w / 2, k % 2 ? 126 : 149, dir * (1.7 + k * .35) * spd, 0); sfx(6); }
         if (t > 50 + (sp.final ? 20 : 0)) done = true;
       } else if (a === 'stomp') {
         b.vx = 0; if (t === 24) { b.vy = -7.6; b.vx = dir * Math.min(2.4, Math.abs(pcx - bcx) / 40 + .4); b.air = true; sfx(1); }
-        if (b.air && t > 30 && b.on) { bossShot('wave', bcx - 6, 152, -1.7 * sm, 0); bossShot('wave', bcx - 6, 152, 1.7 * sm, 0); if (r1 || sp.final) { bossShot('wave', bcx - 6, 152, -2.6, 0); bossShot('wave', bcx - 6, 152, 2.6, 0); } sfx(3); b.air = false; b.atkT = 100; }
+        if (b.air && t > 30 && b.on) { bossShot('wave', bcx - 6, 152, -1.7 * sm, 0); bossShot('wave', bcx - 6, 152, 1.7 * sm, 0); if (r1 || sp.final || (n >= 20 && !sp.fake)) { bossShot('wave', bcx - 6, 152, -2.6 * (sp.final ? 1.15 : 1), 0); bossShot('wave', bcx - 6, 152, 2.6 * (sp.final ? 1.15 : 1), 0); } sfx(3); b.air = false; b.atkT = 100; }
         if (t > 120) done = true;
       } else if (a === 'summon') {
         b.vx = 0; if (t === 22) { const alive = enemies.filter(e => e.alive).length; for (let k = 0; k < 1 + (r1 ? 1 : 0) + (sp.final ? 1 : 0) && alive + k < 5; k++) enemies.push({ x: Math.max(b.ax, Math.min(b.mx, bcx + (k ? 1 : -1) * 50 - 6)), y: 10 * T - 20, w: 12, h: 12, vx: dir * .7, vy: -3, on: false, alive: true, sq: 0, t: k % 2 ? 'f' : 'n', hop: 0, edge: false }); sfx(2); }
@@ -512,13 +556,13 @@ window.startLekoBros = function (host, onExit, startLevel, opts) {
         b.vx = 0; if (t % 14 === 6 && t < 6 + 14 * (3 + (r1 ? 2 : 0) + (r2 ? 2 : 0) + 2)) { const dx = Math.abs(pcx - bcx); bossShot('hammer', bcx - 4, b.y - 4, dir * Math.min(3.2, .8 + dx / 70), -5.2 - Math.random() * 2); sfx(6); }
         if (t > 14 * 9 + 20) done = true;
       } else if (a === 'rain') {
-        b.vx = 0; const nn = 4 + (r1 ? 2 : 0) + (r2 ? 2 : 0) + (sp.final ? 3 : 0);
+        b.vx = 0; const nn = 4 + (r1 ? 2 : 0) + (r2 ? 2 : 0) + (sp.final ? 4 : 0) + (!sp.final && !sp.fake && n >= 20 ? 1 : 0);
         if (t % 11 === 0 && t / 11 <= nn) bossShot('warn', Math.max(b.ax, Math.min(b.mx + b.w, pcx + (Math.random() * 120 - 60))), 150, 0, 0);
         if (t > nn * 11 + 40) done = true;
       } else if (a === 'dash') {
         if (t < 30) { b.vx = 0; b.x += Math.sin(t) * .6; } else if (t === 30) { b.vx = dir * 3.4 * (sp.final ? 1.2 : 1); sfx(3); } else if (t > 30 && (t > 80 || (b.vx === 0))) { done = true; }
       }
-      if (done) { b.atk = null; b.cd = Math.max(sp.final ? 14 : 35, Math.round((125 - (r1 ? 25 : 0) - (r2 ? 20 : 0) - (sp.final ? 25 : 0)) / sm) + Math.floor(Math.random() * 30)); b.vx = 0; }
+      if (done) { b.atk = null; b.cd = Math.max(sp.final ? 10 : sp.fake ? 35 : 24, Math.round((125 - (r1 ? 25 : 0) - (r2 ? 20 : 0) - (sp.final ? 25 : 0)) / sm) + Math.floor(Math.random() * (sp.final ? 18 : 30))); b.vx = 0; }
     }
     b.vy = Math.min(b.vy + .3, 6); const sx = b.vx; move(b); const hitWall = b.vx === 0 && sx !== 0; b.vx = b.atk === 'dash' && hitWall ? 0 : sx;
     b.x = Math.max(b.ax, Math.min(b.mx, b.x)); if (b.atk === 'dash' && (b.x <= b.ax || b.x >= b.mx)) b.vx = 0;
@@ -837,11 +881,20 @@ window.startLekoBros = function (host, onExit, startLevel, opts) {
     }
     g.textAlign = 'left';
   }
+  let errOnce = false;
   function loop(ts) {
     if (!alive) return;
+    raf = requestAnimationFrame(loop);
+    if (document.hidden) { last = 0; return; } // sekme/uygulama arkadayken pil harcama
+    const portrait = !!(portraitMQ && portraitMQ.matches); // telefon dikeyse oyun durur, "yatay çevir" yazısı görünür
+    if (portrait) { if (!wasPortrait) releaseAll(); wasPortrait = true; last = 0; return; }
+    wasPortrait = false;
     if (!last) last = ts; acc += Math.min(100, ts - last); last = ts;
-    while (acc >= 1000 / 60) { if (!paused) update(); acc -= 1000 / 60; }
-    draw(); raf = requestAnimationFrame(loop);
+    let steps = 0;
+    try {
+      while (acc >= 1000 / 60) { if (!paused) update(); acc -= 1000 / 60; steps++; }
+      if (steps) draw(); // 120 Hz ekranlarda gereksiz yeniden çizim yok: sadece oyun ilerlediyse çiz
+    } catch (er) { if (!errOnce) { errOnce = true; console.error('LEKO BROS', er); } acc = 0; }
   }
   /* ---- düzenleme modu paneli ---- */
   const FIELDS = [
@@ -851,7 +904,7 @@ window.startLekoBros = function (host, onExit, startLevel, opts) {
   let edPanel = null, draft = null;
   function goLevel(n) { lv = Math.max(0, Math.min(LEVELS.length - 1, n - 1)); keepPw = 0; cp = 0; lives = 3; reset(false, true); }
   function openEdit() {
-    if (edPanel) return; editOpen = true; paused = true; Object.keys(keys).forEach(k => keys[k] = false);
+    if (edPanel) return; editOpen = true; paused = true; releaseAll();
     draft = JSON.parse(JSON.stringify(window.LEKO_GCFG || {}));
     const d = document.createElement('div'); d.className = 'medit';
     d.innerHTML = '<div class="mehd"><b>DÜZENLEME MODU</b><span>Kaydedince herkese yansır · boş = varsayılan</span></div>' +
@@ -880,15 +933,16 @@ window.startLekoBros = function (host, onExit, startLevel, opts) {
     d.querySelector('#meRst').onclick = () => { inputs.forEach(i => { i.value = ''; }); st.textContent = 'Bu bölüm varsayılana döndü: KAYDET ile onayla.'; };
     d.querySelector('#meX').onclick = closeEdit;
   }
-  function closeEdit() { if (edPanel) { edPanel.remove(); edPanel = null; } editOpen = false; paused = false; Object.keys(keys).forEach(k => keys[k] = false); }
+  function closeEdit() { if (edPanel) { edPanel.remove(); edPanel = null; } editOpen = false; paused = false; releaseAll(); }
 
   reset(true, true); raf = requestAnimationFrame(loop);
   return {
     stop() {
       alive = false; cancelAnimationFrame(raf);
       document.removeEventListener('keydown', kd, true); document.removeEventListener('keyup', ku, true);
-      document.removeEventListener('pointerup', pu); document.removeEventListener('pointercancel', pu);
-      closeEdit(); try { ac && ac.close(); } catch (e) {} cv.remove(); pad.remove();
+      document.removeEventListener('pointermove', pm); document.removeEventListener('pointerup', pu); document.removeEventListener('pointercancel', pu);
+      window.removeEventListener('blur', releaseAll); document.removeEventListener('visibilitychange', onHide);
+      closeEdit(); try { ac && ac.close(); } catch (e) {} cv.remove(); pad.remove(); rot.remove();
     },
     _state: () => ({ p, state, score, coins, lives, enemies, map, lv, COLS, FLAGX, time, th, pw, items, fireballs, inv, keepPw, boss, gateList, bshots, cp }), _keys: keys, _goLevel: goLevel, _edit: openEdit, _pw: n => { pw = n; keepPw = n; if (n > 0 && p.h < 24) { p.h = 24; p.y -= 10; } }
   };
