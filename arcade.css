@@ -1,0 +1,17 @@
+#arcade{position:fixed;inset:0;z-index:99990;background:#07111b;color:#f4f7ff;display:none;flex-direction:column;font-family:system-ui,sans-serif;touch-action:none}
+#arcade.on{display:flex}#arcTop{height:54px;min-height:54px;display:flex;align-items:center;gap:10px;padding:7px 12px;background:#0c1b2a;border-bottom:1px solid #29445d}
+#arcTop strong{font-size:16px;letter-spacing:.08em}#arcTop span{opacity:.75;font-size:12px}#arcTop button{margin-left:auto;background:#19334b;color:#fff;border:1px solid #41617c;border-radius:10px;padding:9px 14px}
+#arcMenu{overflow:auto;padding:18px;display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:12px;align-content:start}
+.arc-card{min-height:105px;border:1px solid #294b68;border-radius:16px;background:linear-gradient(145deg,#17334b,#0c1b2b);color:white;text-align:left;padding:14px;display:flex;flex-direction:column;justify-content:space-between}
+.arc-card b{font-size:16px}.arc-card small{opacity:.7}.arc-card:active{transform:scale(.97)}
+#arcStage{display:none;flex:1;min-height:0;position:relative;align-items:center;justify-content:center;padding:8px;gap:10px}
+#arcStage.on{display:flex}#arcCanvas{display:block;width:min(100%,1200px);height:auto;max-height:calc(100% - 4px);aspect-ratio:16/9;background:#081321;border:1px solid #2a4c66;border-radius:12px;touch-action:none}
+#arcPad{position:absolute;inset:auto 0 12px;display:flex;justify-content:space-between;align-items:end;padding:0 18px;pointer-events:none}
+.arc-side{display:flex;gap:10px;pointer-events:auto}.arc-key{width:clamp(52px,9vw,78px);height:clamp(52px,9vw,78px);border-radius:18px;border:1px solid #91b6d2;background:#173d5bcc;color:white;font-size:22px;font-weight:800;touch-action:none;user-select:none;-webkit-user-select:none}
+.arc-key:active,.arc-key.down{background:#2878a8;transform:scale(.96)}
+#arcHint{position:absolute;top:12px;left:50%;transform:translateX(-50%);background:#06111dcc;padding:7px 12px;border-radius:99px;font-size:12px;pointer-events:none;white-space:nowrap}
+#arcPortrait{display:none;position:absolute;inset:0;background:#07111b;z-index:3;align-items:center;justify-content:center;text-align:center;padding:25px;font-size:20px}
+#arcCanvas[data-game="memory"],#arcCanvas[data-game="2048"]{touch-action:pan-y}
+@media(orientation:portrait) and (pointer:coarse){#arcPortrait{display:flex}#arcPad{bottom:7px}}
+@media(hover:hover) and (pointer:fine){#arcPad{opacity:.35}#arcPad:hover{opacity:1}}
+@media(max-width:650px){#arcTop{height:46px;min-height:46px}#arcMenu{grid-template-columns:repeat(2,minmax(0,1fr));padding:12px;gap:9px}.arc-card{min-height:90px;padding:11px}#arcStage{padding:3px}#arcCanvas{width:100%;max-height:100%;border-radius:7px}#arcPad{padding:0 7px;bottom:5px}.arc-key{width:56px;height:56px;border-radius:15px}}
