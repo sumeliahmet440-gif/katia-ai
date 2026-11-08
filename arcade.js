@@ -116,13 +116,14 @@ function pointerKey(e,on){const b=e.target.closest('[data-key]');if(!b)return;co
 pad.addEventListener('pointerdown',e=>{e.preventDefault();pointerKey(e,true)});['pointerup','pointercancel','lostpointercapture'].forEach(n=>pad.addEventListener(n,e=>pointerKey(e,false)));
 window.addEventListener('keydown',e=>{if(!root.classList.contains('on')||!game)return;let m={ArrowLeft:'left',a:'left',ArrowRight:'right',d:'right',ArrowUp:'up',w:'up',ArrowDown:'down',s:'down',' ':'jump',Enter:'action',x:'action',z:'action'};let k=m[e.key];if(k){keys.add(k);if(['ArrowLeft','ArrowRight','ArrowUp','ArrowDown',' '].includes(e.key))e.preventDefault()}});
 window.addEventListener('keyup',e=>{let m={ArrowLeft:'left',a:'left',ArrowRight:'right',d:'right',ArrowUp:'up',w:'up',ArrowDown:'down',s:'down',' ':'jump',Enter:'action',x:'action',z:'action'};if(m[e.key])keys.delete(m[e.key])});
-canvas.addEventListener('pointerdown',e=>{if(!game)return;const r=canvas.getBoundingClientRect(),x=(e.clientX-r.left)*960/r.width,y=(e.clientY-r.top)*540/r.height;
+let canvasStart=null;
+canvas.addEventListener('pointerdown',e=>{if(!game)return;const r=canvas.getBoundingClientRect(),x=(e.clientX-r.left)*960/r.width,y=(e.clientY-r.top)*540/r.height;canvasStart={x,y};
  if(over){start(game);return}
- if(game==='memory'){let c=Math.floor((x-190)/148),row=Math.floor((y-45)/116),i=row*4+c;if(c>=0&&c<4&&row>=0&&row<4){let s=state,v=s.cards[i];if(!v.show&&!v.done&&!s.wait){v.show=true;s.moves++;if(s.first<0)s.first=i;else{let f=s.cards[s.first];if(f.v===v.v){f.done=v.done=true;score+=20;s.first=-1;if(s.cards.every(z=>z.done)){say('Tebrikler! Tüm çiftleri buldun.')}}else s.wait=.8}}}}
- if(game==='2048'){let dx=x-480,dy=y-270;if(Math.abs(dx)>Math.abs(dy))move2048(state,dx>0?'right':'left');else move2048(state,dy>0?'down':'up')}
+ if(game==='memory'){let col=Math.floor((x-190)/148),row=Math.floor((y-45)/116),i=row*4+col;if(col>=0&&col<4&&row>=0&&row<4){let s=state,v=s.cards[i];if(!v.show&&!v.done&&!s.wait){v.show=true;s.moves++;if(s.first<0)s.first=i;else{let f=s.cards[s.first];if(f.v===v.v){f.done=v.done=true;score+=20;s.first=-1;if(s.cards.every(z=>z.done)){say('Tebrikler! Tüm çiftleri buldun.')}}else s.wait=.8}}}}
  if(game==='flappy')keys.add('jump');
 });
-canvas.addEventListener('pointerup',()=>keys.delete('jump'));
+canvas.addEventListener('pointerup',e=>{keys.delete('jump');if(game==='2048'&&canvasStart){const r=canvas.getBoundingClientRect(),x=(e.clientX-r.left)*960/r.width,y=(e.clientY-r.top)*540/r.height,dx=x-canvasStart.x,dy=y-canvasStart.y;if(Math.max(Math.abs(dx),Math.abs(dy))>25){move2048(state,Math.abs(dx)>Math.abs(dy)?(dx>0?'right':'left'):(dy>0?'down':'up'))}canvasStart=null}});
+canvas.addEventListener('pointercancel',()=>{keys.delete('jump');canvasStart=null});
 function move2048(s,dir){let b=s.b.slice(),changed=false;for(let n=0;n<4;n++){let ids=Array.from({length:4},(_,i)=>dir==='left'?n*4+i:dir==='right'?n*4+3-i:dir==='up'?i*4+n:(3-i)*4+n);let a=ids.map(i=>b[i]).filter(Boolean),out=[];for(let i=0;i<a.length;i++){if(a[i]===a[i+1]){out.push(a[i]*2);score+=a[i]*2;i++}else out.push(a[i])}while(out.length<4)out.push(0);ids.forEach((id,i)=>{if(b[id]!==out[i])changed=true;b[id]=out[i]})}if(changed){s.b=b;s.turns++;add2048(s.b);if(s.b.includes(2048))say('2048! Kazandın!');if(!s.b.some(v=>!v))say('Hamle kalmadı. Yeniden başlatmak için menüye dön.')}}
 menu.addEventListener('click',e=>{let b=e.target.closest('[data-game]');if(b)start(b.dataset.game)});
 $('#arcBack').onclick=showMenu;$('#arcClose').onclick=close;
