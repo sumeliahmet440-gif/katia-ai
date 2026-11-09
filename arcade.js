@@ -3,13 +3,13 @@
 const $=s=>document.querySelector(s);
 const games=[
  ['mario','🍄','Mario','30 bölümlük platform macerası'],
- ['dk','🦍','Donkey Kong','Varillere dikkat et, yukarı tırman'],
- ['flappy','🐤','Flappy Bird','Dokun, uç ve borulardan geç'],
- ['snake','🐍','Yılan','Yemleri topla, kendine çarpma'],
+ ['dk','▣','Donkey Kong','Varillere dikkat et, yukarı tırman'],
+ ['flappy','▣','Flappy Bird','Dokun, uç ve borulardan geç'],
+ ['snake','▣','Yılan','Yemleri topla, kendine çarpma'],
  ['tetris','🧱','Tetris','Blokları döndür ve satırları temizle'],
  ['breakout','🟠','Tuğla Kırma','Topu sektir, tuğlaları parçala'],
  ['pong','🏓','Pong','Rakibe karşı sayı kazan'],
- ['space','🚀','Uzay Savaşı','Düşmanları vur ve hayatta kal'],
+ ['space','▣','Uzay Savaşı','Düşmanları vur ve hayatta kal'],
  ['memory','🧠','Hafıza','Aynı kartları eşleştir'],
  ['2048','🔢','2048','Aynı sayıları birleştir'],
  ['detective','🕵️','Dedektif Kuzenler','Dedektiflik yap, delilleri bul ve davaları çöz']
@@ -21,7 +21,7 @@ const keys=new Set();let game='',state=null,raf=0,last=0,score=0,over=false,paus
 menu.innerHTML=games.map(g=>'<button class="arc-card" data-game="'+g[0]+'"><b>'+g[1]+' '+g[2]+'</b><small>'+g[3]+'</small></button>').join('');
 const say=(t)=>{hint.textContent=t};
 function open(){root.classList.add('on');showMenu()}
-function showMenu(){stop();menu.style.display='grid';stage.classList.remove('on');status.textContent='10 OYUN';game='';keys.clear();unlock();}
+function showMenu(){stop();menu.style.display='grid';stage.classList.remove('on');status.textContent='11 OYUN';game='';keys.clear();unlock();}
 function stop(){cancelAnimationFrame(raf);raf=0;keys.clear();pad.querySelectorAll('button').forEach(b=>b.classList.remove('down'))}
 function close(){showMenu();root.classList.remove('on')}
 function unlock(){try{if(screen.orientation?.unlock)screen.orientation.unlock()}catch(e){}try{if(document.fullscreenElement)document.exitFullscreen?.().catch(()=>{})}catch(e){}}
@@ -100,16 +100,42 @@ function valid(s,x,y,sh){return sh.every((r,dy)=>r.every((v,dx)=>!v||(x+dx>=0&&x
 function movePiece(s,dx,dy){if(valid(s,s.piece.x+dx,s.piece.y+dy,s.piece.shape)){s.piece.x+=dx;s.piece.y+=dy;return true}return false}
 function rotate(s){let a=s.piece.shape,b=a[0].map((_,i)=>a.map(r=>r[i]).reverse());if(valid(s,s.piece.x,s.piece.y,b))s.piece.shape=b}
 function lockPiece(s){s.piece.shape.forEach((r,y)=>r.forEach((v,x)=>{if(v&&s.piece.y+y>=0)s.grid[s.piece.y+y][s.piece.x+x]=1}));let n=0;s.grid=s.grid.filter(r=>{if(r.every(v=>v)){n++;return false}return true});while(s.grid.length<20)s.grid.unshift(Array(10).fill(0));score+=n*n*100;s.lines+=n;s.piece=null}
+function pixel(x,y,rows,palette,scale=5){rows.forEach((row,yy)=>[...row].forEach((ch,xx)=>{if(ch!=='.')rect(x+xx*scale,y+yy*scale,scale,scale,palette[ch]||'#fff')}))}
 function draw(){
- base();let s=state;
- if(game==='dk'){rect(0,0,960,540,'#18243a');for(let i=0;i<5;i++){let y=430-i*100;rect(45,y,870,12,'#a85d32');for(let x=55;x<910;x+=70)rect(x,y+12,6,10,'#e3b36a')}ctx.save();ctx.translate(90,90);ctx.fillStyle='#70442c';ctx.beginPath();ctx.ellipse(0,-8,24,30,0,0,7);ctx.fill();ctx.fillStyle='#c58a55';ctx.beginPath();ctx.ellipse(0,2,15,12,0,0,7);ctx.fill();ctx.fillStyle='#fff';ctx.fillRect(-10,-18,6,6);ctx.fillRect(5,-18,6,6);ctx.restore();ctx.save();ctx.translate(s.x,s.y);ctx.fillStyle='#e8b98b';ctx.beginPath();ctx.arc(0,-18,11,0,7);ctx.fill();ctx.fillStyle='#d83b35';ctx.fillRect(-12,-8,24,23);ctx.fillStyle='#2458a8';ctx.fillRect(-11,13,9,15);ctx.fillRect(2,13,9,15);ctx.restore();s.barrels.forEach(b=>{ctx.fillStyle='#b66b32';ctx.beginPath();ctx.arc(b.x,b.y,17,0,7);ctx.fill();ctx.strokeStyle='#f2c078';ctx.lineWidth=4;ctx.beginPath();ctx.arc(b.x,b.y,11,0,7);ctx.stroke()});text('CAN: '+s.lives+'   KAT: '+s.goal,20,35)}
- if(game==='flappy'){rect(0,0,960,540,'#73c7e9');s.pipes.forEach(p=>{rect(p.x,0,55,p.top,'#21884b');rect(p.x,p.top+p.gap,55,540-p.top-p.gap,'#21884b')});ctx.fillStyle='#f6cf45';ctx.beginPath();ctx.ellipse(s.x,s.y,18,14,0,0,7);ctx.fill();ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(s.x+7,s.y-5,5,0,7);ctx.fill();ctx.fillStyle='#222';ctx.beginPath();ctx.arc(s.x+9,s.y-5,2,0,7);ctx.fill();ctx.fillStyle='#ed7939';ctx.beginPath();ctx.moveTo(s.x+15,s.y);ctx.lineTo(s.x+29,s.y+4);ctx.lineTo(s.x+15,s.y+7);ctx.fill();rect(0,515,960,25,'#b38a45');text('SKOR '+score,25,40)}
- if(game==='snake'){rect(0,0,960,540,'#101d25');for(let x=0;x<30;x++)for(let y=0;y<16;y++){ctx.strokeStyle='#1b303b';ctx.strokeRect(x*32,y*32,32,32)}text('🍎',s.food[0]*32+16,s.food[1]*32+27,23,'#fff','center');s.body.forEach((p,i)=>rect(p[0]*32+2,p[1]*32+2,28,28,i?'#42a86b':'#a4ef70'));text('SKOR '+score,20,525)}
- if(game==='tetris'){s.grid.forEach((r,y)=>r.forEach((v,x)=>{if(v){rect(270+x*22,40+y*22,20,20,'#45b7a0')}}));if(s.piece)s.piece.shape.forEach((r,y)=>r.forEach((v,x)=>{if(v)rect(270+(s.piece.x+x)*22,40+(s.piece.y+y)*22,20,20,'#f3bd4e')}));text('TETRIS',480,25,20);text('SATIR '+s.lines,540,100,22)}
- if(game==='breakout'){s.bricks.forEach(r=>r.forEach(b=>{if(b.on)rect(b.x,b.y,60,20,'#e77d52')}));rect(s.paddle-60,460,120,13,'#e8e8ff');ctx.beginPath();ctx.arc(s.x,s.y,9,0,7);ctx.fillStyle='#fff';ctx.fill();text('SKOR '+score,20,35)}
- if(game==='pong'){rect(20,s.p-50,14,100,'#f7f7f7');rect(926,s.ai-50,14,100,'#f7f7f7');ctx.setLineDash([12,12]);ctx.strokeStyle='#71869b';ctx.beginPath();ctx.moveTo(480,0);ctx.lineTo(480,540);ctx.stroke();ctx.setLineDash([]);ctx.beginPath();ctx.arc(s.x,s.y,11,0,7);ctx.fillStyle='#fff';ctx.fill();text('SEN '+score,400,45,26)}
- if(game==='space'){ctx.save();ctx.translate(s.x,485);ctx.fillStyle='#a9e8ff';ctx.beginPath();ctx.moveTo(0,-22);ctx.lineTo(16,18);ctx.lineTo(0,10);ctx.lineTo(-16,18);ctx.closePath();ctx.fill();ctx.fillStyle='#ffb84d';ctx.fillRect(-5,15,10,9);ctx.restore();s.bullets.forEach(b=>rect(b.x-3,b.y,6,18,'#f9ed69'));s.enemies.forEach(e=>{ctx.fillStyle='#9a73db';ctx.beginPath();ctx.arc(e.x,e.y,15,0,7);ctx.fill();ctx.fillStyle='#fff';ctx.fillRect(e.x-8,e.y-4,5,5);ctx.fillRect(e.x+4,e.y-4,5,5)});text('CAN '+s.lives+'  SKOR '+score,20,35)}
- if(game==='memory'){for(let i=0;i<16;i++){let x=190+(i%4)*148,y=45+Math.floor(i/4)*116,c=s.cards[i];rect(x,y,128,96,c.show||c.done?'#27647a':'#25405b');text(c.show||c.done?String(c.v):'?',x+64,y+62,38,'#fff','center')}text('HAMLE '+s.moves,20,35)}
+ ctx.imageSmoothingEnabled=false;base('#101b2b');let s=state;
+ if(game==='dk'){
+  rect(0,0,960,540,'#192b43');for(let bx=0;bx<960;bx+=80){rect(bx,0,48,540,'#203750');for(let wy=35;wy<400;wy+=65)rect(bx+12,wy,14,20,'#d4a85e')}
+  for(let i=0;i<5;i++){let y=430-i*100;rect(38,y,884,13,'#a85d32');rect(38,y+13,884,5,'#e8b66b');for(let x=45;x<920;x+=28)rect(x,y+18,4,7,'#76503a')}
+  pixel(80,55,['..bbbb..','..bbbb..','.bbbbbb.','bbbbbbbb','bbkbbkbb','bbbbbbbb','.bccccb.','..cccc..','...cc...'],{b:'#754326',k:'#15151c',c:'#c18a56'},6);
+  ctx.save();ctx.translate(s.x-18,s.y-32);pixel(0,0,['...ss...','..ssss..','.ssssss.','.spppps.','..pppp..','..rrrr..','.rrrrrr.','.rwwwwr.','..wwww..','..wwww..','.bb..bb.','.bb..bb.'],{s:'#e8b98b',p:'#20232b',r:'#d93f38',w:'#f1f1e8',b:'#2458a8'},5);ctx.restore();
+  s.barrels.forEach(b=>{rect(b.x-16,b.y-15,32,30,'#a65d2e');rect(b.x-16,b.y-9,32,5,'#e6b76c');rect(b.x-16,b.y+5,32,5,'#e6b76c');rect(b.x-3,b.y-15,6,30,'#6e3c25')});text('CAN: '+s.lives+'   KAT: '+s.goal,20,35);
+ }
+ if(game==='flappy'){
+  rect(0,0,960,540,'#72c7e7');for(let i=0;i<6;i++){rect(i*180,80+(i%2)*38,80,16,'#b8e2e8');rect(i*180+35,64+(i%2)*38,50,16,'#b8e2e8')}
+  s.pipes.forEach(p=>{rect(p.x,0,58,p.top-8,'#197b43');rect(p.x-5,p.top-18,68,18,'#48b85e');rect(p.x,p.top+p.gap+8,58,540-p.top-p.gap,'#197b43');rect(p.x-5,p.top+p.gap,68,18,'#48b85e')});
+  pixel(Math.round(s.x-18),Math.round(s.y-14),['...yy....','..yyyyy..','.yyyyyyy.','yyyyyyyyy','yywyywyyy','yyyyyyyyy','.yoooooy.','..ooooo..','...oo....'],{y:'#f6cf45',w:'#fff5cf',o:'#e97832'},4);
+  rect(0,515,960,25,'#b38a45');rect(0,515,960,5,'#e5c47c');text('SKOR '+score,25,40);
+ }
+ if(game==='snake'){
+  rect(0,0,960,540,'#101d25');for(let x=0;x<30;x++)for(let y=0;y<16;y++){rect(x*32,y*32,31,31,(x+y)%2?'#142630':'#172d36')}
+  pixel(s.food[0]*32+5,s.food[1]*32+5,['..gg..','..gg..','..rr..','.rrrr.','rrrrrr','rrrrrr','.rrrr.','..rr..'],{g:'#4f9a43',r:'#e34d4d'},4);
+  s.body.forEach((p,i)=>{rect(p[0]*32+2,p[1]*32+2,28,28,i?'#379d65':'#9ce56e');rect(p[0]*32+5,p[1]*32+5,8,7,'#c7f78a');if(i===0){rect(p[0]*32+19,p[1]*32+8,4,4,'#12251b');rect(p[0]*32+19,p[1]*32+19,4,4,'#12251b')}});text('SKOR '+score,20,525)
+ }
+ if(game==='tetris'){
+  rect(245,24,250,500,'#0a1420');s.grid.forEach((r,y)=>r.forEach((v,x)=>{if(v){rect(270+x*22,40+y*22,20,20,'#31a98d');rect(272+x*22,42+y*22,16,4,'#a4f2d8');rect(272+x*22,60+y*22,16,2,'#176e67')}}));if(s.piece)s.piece.shape.forEach((r,y)=>r.forEach((v,x)=>{if(v){let px=270+(s.piece.x+x)*22,py=40+(s.piece.y+y)*22;rect(px,py,20,20,'#f3bd4e');rect(px+2,py+2,16,4,'#fff0a3');rect(px+2,py+17,16,2,'#a96b2d')}}));text('TETRIS',620,65,26);text('SATIR '+s.lines,620,105,22)
+ }
+ if(game==='breakout'){
+  s.bricks.forEach((r,ri)=>r.forEach((b)=>{if(b.on){rect(b.x,b.y,60,20,['#e77d52','#e6b84e','#55b6a2','#6c8de2','#b47bd4'][ri]);rect(b.x+3,b.y+3,54,4,'#ffffff77')}}));rect(s.paddle-60,460,120,13,'#e8e8ff');rect(s.paddle-48,462,96,4,'#9cb8ff');rect(s.x-8,s.y-8,16,16,'#fff');rect(s.x-4,s.y-4,8,8,'#f4d56d');text('SKOR '+score,20,35)
+ }
+ if(game==='pong'){
+  rect(20,s.p-50,14,100,'#f7f7f7');rect(926,s.ai-50,14,100,'#f7f7f7');for(let y=0;y<540;y+=28)rect(478,y,4,14,'#71869b');rect(s.x-9,s.y-9,18,18,'#fff');text('SEN '+score,400,45,26)
+ }
+ if(game==='space'){
+  rect(0,0,960,540,'#080f26');for(let i=0;i<75;i++){let xx=(i*137)%960,yy=(i*83)%530;rect(xx,yy,2,2,i%3?'#91a9d4':'#f7d98a')}
+  pixel(Math.round(s.x-20),463,['....c....','...ccc...','..ccccc..','.ccccccc.','ccccccccc','cc.c.c.cc','...fff...','...fff...'],{c:'#8bdcf5',f:'#f6a84a'},5);
+  s.bullets.forEach(b=>{rect(b.x-3,b.y,6,18,'#f9ed69');rect(b.x-1,b.y,2,10,'#fff')});s.enemies.forEach(e=>pixel(Math.round(e.x-15),Math.round(e.y-12),['..pppp..','.pppppp.','ppwppwpp','pppppppp','.p.pp.p.'],{p:'#9a73db',w:'#fff'},4));text('CAN '+s.lives+'  SKOR '+score,20,35)
+ }
+ if(game==='memory'){for(let i=0;i<16;i++){let x=190+(i%4)*148,y=45+Math.floor(i/4)*116,c=s.cards[i];rect(x,y,128,96,c.show||c.done?'#27647a':'#25405b');rect(x+5,y+5,118,86,'#1b344c');text(c.show||c.done?String(c.v):'?',x+64,y+62,38,'#fff','center')}text('HAMLE '+s.moves,20,35)}
  if(game==='2048'){rect(290,35,380,470,'#766c61');for(let i=0;i<16;i++){let x=300+(i%4)*91,y=45+Math.floor(i/4)*112,v=s.b[i];rect(x,y,82,102,v?'#'+({2:'eee4da',4:'ede0c8',8:'f2b179',16:'f59563',32:'f67c5f',64:'f65e3b',128:'edcf72',256:'edcc61',512:'edc850',1024:'edc53f',2048:'edc22e'}[v]||'3c3a32'):'#9b8d80');if(v)text(String(v),x+41,y+62,Math.min(27,v>999?21:27),'#3c352e','center')}text('2048 · HAMLE '+s.turns,20,30,20)}
  if(over){rect(250,205,460,120,'#06111de8');text('OYUN BİTTİ',480,255,34,'#fff','center');text('SKOR '+score+' · Yeniden başlamak için dokun',480,295,18,'#fff','center')}
 }
