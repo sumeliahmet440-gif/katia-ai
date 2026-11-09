@@ -142,8 +142,8 @@ app.post('/api/k/*', async (req, res) => {
 app.post('/api/chat', async (req, res) => {
   try {
     if (!guard(req, res, 40)) return;
-    const key = groqKey();
-    if (!key) return res.status(503).json({ error: { message: 'Sunucuda GROQ_API_KEY tanımlı değil. Render > Environment bölümüne ekle.' } });
+    const key = cleanKey(req.headers['x-groq-key']) || groqKey();
+    if (!key) return res.status(503).json({ error: { message: 'Sunucuda GROQ_API_KEY tanımlı değil. Render > Environment bölümüne ekle veya Ayarlardan kendi Groq anahtarını gir.' } });
     const b = req.body || {};
     if (!BUILTIN.includes(b.persona)) return res.status(403).json({ error: { message: 'Bu mod için hazır anahtar yok. Ayarlardan kendi API anahtarını gir.' } });
     const gt = await core.gate(req.headers['x-did'], b.persona);
