@@ -12,7 +12,7 @@ const games=[
  ['space','▣','Uzay Savaşı','Düşmanları vur ve hayatta kal'],
  ['memory','🧠','Hafıza','Aynı kartları eşleştir'],
  ['2048','🔢','2048','Aynı sayıları birleştir'],
- ['detective','🕵️','Dedektif Kuzenler','Dedektiflik yap, delilleri bul ve davaları çöz']
+ ['detective','🕵️','Dedektif Kuzenler','Dedektiflik yap, delilleri bul ve davaları çöz'],\n ['chess','♟️','Satranç','Yapay zekâya veya çevrim içi arkadaşına karşı oyna']
 ];
 const root=document.createElement('section');root.id='arcade';root.innerHTML='<div id="arcTop"><strong>🎮 KATIA ARCADE</strong><span id="arcStatus">11 OYUN</span><button id="arcBack">MENÜ</button><button id="arcClose">KAPAT ✕</button></div><div id="arcMenu"></div><div id="arcStage"><canvas id="arcCanvas" width="960" height="540"></canvas><div id="arcHint"></div><div id="arcPad"><div class="arc-side"><button class="arc-key" data-key="left">◀</button><button class="arc-key" data-key="right">▶</button></div><div class="arc-side"><button class="arc-key" data-key="up">▲</button><button class="arc-key" data-key="down">▼</button><button class="arc-key" data-key="jump">⤒</button><button class="arc-key" data-key="action">●</button></div></div><div id="arcPortrait">📱<br>Oyunu yatay oynamak için telefonu çevir.</div></div>';
 document.body.appendChild(root);
@@ -26,7 +26,7 @@ function stop(){cancelAnimationFrame(raf);raf=0;keys.clear();activePointers.clea
 function close(){showMenu();root.classList.remove('on')}
 function unlock(){try{if(screen.orientation?.unlock)screen.orientation.unlock()}catch(e){}try{if(document.fullscreenElement)document.exitFullscreen?.().catch(()=>{})}catch(e){}}
 async function landscape(){try{if(matchMedia('(pointer:coarse)').matches){await root.requestFullscreen?.();await screen.orientation?.lock?.('landscape')}}catch(e){}}
-function start(id){if(id==='mario'){close();if(typeof window.openGame==='function')window.openGame('mario');else alert('Mario motoru yüklenemedi.');return}
+function start(id){if(id==='chess'){window.open('/satranc.html','_self');return}if(id==='mario'){close();if(typeof window.openGame==='function')window.openGame('mario');else alert('Mario motoru yüklenemedi.');return}
 stop();game=id;score=0;over=false;paused=false;menu.style.display='none';stage.classList.add('on');canvas.dataset.game=id;status.textContent=games.find(g=>g[0]===id)?.[2]||id;pad.style.display=['memory','2048'].includes(id)?'none':'flex';say(help(id));state=init(id);last=performance.now();landscape();raf=requestAnimationFrame(loop)}
 function help(id){return ({dk:'← → hareket · ↑ üst kata çık · ⤒ zıpla · varillerden kaç',flappy:'Zıpla / dokun: kanat çırp',snake:'Oklar veya A-D-W-S',tetris:'← → hareket · ↓ hızlandır · ● döndür',breakout:'← → veya fare / dokunmatik',pong:'↑ ↓ veya ◀ ▶',space:'← → hareket · ● ateş',memory:'Kartlara dokunarak çiftleri bul', '2048':'Kaydır veya ok tuşlarıyla sayıları birleştir'})[id]||''}
 function init(id){
