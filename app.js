@@ -965,11 +965,32 @@ let katiaInstallPrompt=null;
 window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();katiaInstallPrompt=e;});
 window.addEventListener('appinstalled',()=>{katiaInstallPrompt=null;const n=document.querySelector('#katiaInstallState');if(n)n.textContent='✓ Katia bu cihaza yüklendi.';});
 function katiaInstallHtml(){
- const ua=navigator.userAgent||'',ios=/iPhone|iPad|iPod/i.test(ua),android=/Android/i.test(ua),win=/Windows/i.test(ua),linux=/Linux/i.test(ua),opera=/OPR\//i.test(ua)||/Opera/i.test(ua),standalone=matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
- const os=ios?'iPhone / iPad':android?'Android':win?'Windows':linux?'Linux / Pardus':'Bu cihaz';
- const action=standalone?'UYGULAMA ZATEN YÜKLÜ':katiaInstallPrompt?'UYGULAMAYI YÜKLE':opera?'OPERA / OPERA GX KURULUM REHBERİ':ios?'ANA EKRANA EKLE':'KURULUM YÖNERGESİ';
- let guide=standalone?'Katia artık ayrı bir uygulama penceresinde açılıyor.':opera&&android?'Opera veya Opera GX menüsünü aç → “Ana ekrana ekle” seçeneğine dokun. Bu, Katia için ana ekranda tarayıcı üzerinden açılan bir kısayol oluşturur.':opera?'Opera / Opera GX üzerinde Katia’yı kullanabilirsin. Masaüstünde Ctrl + D ile yer imlerine ekle veya sekmeye sağ tıklayıp sekmeyi sabitle. Bu tarayıcılarda ayrı uygulama yükleme seçeneği her sürümde bulunmadığından kurulum düğmesi görünmeyebilir.':ios?'Safari’de Paylaş düğmesine dokun → “Ana Ekrana Ekle” → Ekle. iOS, web uygulamalarını bu şekilde kurar.':android?'Chrome veya desteklenen tarayıcıda “Yükle” ya da menüden “Ana ekrana ekle” seçeneğini kullan.':win?'Edge veya Chrome adres çubuğundaki yükle simgesini seç. Menü → Uygulamaları yükle → Katia AI yolunu da kullanabilirsin.':linux?'Pardus/Linux’ta Chromium veya Chrome menüsünden “Uygulamayı yükle” seçeneğini seç. Firefox’ta destek yoksa siteyi tarayıcıdan kullan.':'Desteklenen bir Chromium tarayıcısında adres çubuğundaki yükle simgesini veya tarayıcı menüsündeki uygulama yükleme seçeneğini kullan.';
- return '<section class="note" style="padding:16px;border:1px solid var(--ln);border-radius:14px;margin:10px 0"><b style="font-size:16px">KATIA · '+(opera?'Opera / Opera GX · ':'')+os+'</b><p style="line-height:1.65;margin:10px 0">Tek bir web uygulaması kullanılır. Opera ve Opera GX’te desteklenen kurulum istemi çıkarsa yükleyebilirsin; çıkmazsa aşağıdaki kısayol yönergesini izle. Ayrı bir APK veya EXE indirilmez.</p><button type="button" data-btn="installNow" style="width:100%;padding:13px;font-weight:800">'+action+'</button><div id="katiaInstallState" class="note" style="margin-top:10px">'+guide+'</div><p class="note" style="margin-top:8px">Güncellemeler site üzerinden gelir. İlk kurulum için HTTPS bağlantısı gerekir.</p></section><div class="note">Destek: Windows 10/11 · Pardus ve diğer Linux dağıtımları · Android · iPhone/iPad (Safari ile Ana Ekrana Ekle) · macOS.</div>';
+ const ua=navigator.userAgent||'',platform=navigator.platform||'';
+ const ios=/iPhone|iPad|iPod/i.test(ua)||(platform==='MacIntel'&&navigator.maxTouchPoints>1);
+ const android=/Android/i.test(ua),win=/Windows/i.test(ua),linux=/Linux/i.test(ua)&&!android;
+ const opera=/OPR\\//i.test(ua)||/Opera/i.test(ua),edge=/Edg\\//i.test(ua),samsung=/SamsungBrowser/i.test(ua);
+ const firefox=/Firefox\\//i.test(ua),chrome=/Chrome\\//i.test(ua)&&!edge&&!opera&&!samsung;
+ const standalone=matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
+ const os=ios?'iPhone / iPad':android?'Android':win?'Windows':linux?'Pardus / Linux':'Bu cihaz';
+ const browser=opera?'Opera / Opera GX':edge?'Microsoft Edge':samsung?'Samsung Internet':firefox?'Firefox':chrome?'Google Chrome':/Safari/i.test(ua)?'Safari':'tarayıcın';
+ const action=standalone?'UYGULAMA ZATEN YÜKLÜ':katiaInstallPrompt?'UYGULAMAYI YÜKLE':ios?'ANA EKRANA EKLE':android?'ANA EKRANA EKLE':(win||linux)?'TARAYICIDAN UYGULAMA YÜKLE':'KURULUM YÖNERGESİ';
+ let guide='';
+ if(standalone)guide='Katia bu tarayıcı profiline uygulama olarak eklenmiş. Uygulama simgesinden açabilirsin.';
+ else if(katiaInstallPrompt)guide='Bu tarayıcı Katia için gerçek kurulum penceresi sunabiliyor. Düğmeye dokun ve açılan pencerede Yükle’yi onayla.';
+ else if(ios)guide='iPhone / iPad: Tarayıcının Paylaş menüsünü aç → Ana Ekrana Ekle → Ekle. Safari’de bu yöntem doğrudan desteklenir. iOS sürümüne göre diğer tarayıcılar da Paylaş menüsünden aynı işlemi sunabilir.';
+ else if(android&&opera)guide='Opera / Opera GX: Menü ⋮ → Ana ekrana ekle. Bu çoğunlukla tarayıcı kısayolu oluşturur; gerçek uygulama kurulumu için Chrome veya Samsung Internet’i kullanabilirsin.';
+ else if(android&&samsung)guide='Samsung Internet: Menü → Ekle sayfası → Ana ekran veya mevcutsa Uygulamayı yükle seçeneği.';
+ else if(android&&firefox)guide='Firefox Android: Menü ⋮ → Yükle veya Ana ekrana ekle. Bu tarayıcıda simge/kısayol şeklinde eklenebilir.';
+ else if(android)guide='Android: Chrome’da menü ⋮ → Uygulamayı yükle (veya Ana ekrana ekle) → Yükle. Samsung cihazlarda Samsung Internet de kullanılabilir. Opera ve bazı diğer tarayıcılarda yalnızca tarayıcı kısayolu eklenebilir.';
+ else if(win&&opera)guide='Windows + Opera / Opera GX: Bu tarayıcıda Katia için ayrı uygulama yükleme istemi her sürümde sunulmayabilir. Tam PWA kurulumu için Katia’yı Edge veya Chrome’da aç → adres çubuğundaki yükle simgesi ya da Menü → Uygulamaları yükle → Yükle.';
+ else if(win&&firefox)guide='Windows + Firefox: Firefox PWA kurulumunu yerleşik olarak sunmaz. Katia’yı Edge veya Chrome’da aç → adres çubuğundaki yükle simgesi → Yükle.';
+ else if(win)guide='Windows: Edge veya Chrome’da adres çubuğundaki uygulama yükle simgesine tıkla. Alternatif: Menü → Uygulamaları yükle → Katia AI → Yükle.';
+ else if(linux&&firefox)guide='Pardus / Linux + Firefox: Yerleşik PWA yükleme yok. Katia’yı Chromium veya Chrome’da aç → Menü → Uygulamayı yükle.';
+ else if(linux&&opera)guide='Pardus / Linux + Opera: Opera’da yer imi/kısayol kullanabilirsin. Ayrı PWA uygulaması için Katia’yı Chromium veya Chrome’da aç → Menü → Uygulamayı yükle.';
+ else if(linux)guide='Pardus / Linux: Chromium veya Chrome’da Menü → Uygulamayı yükle / Katia AI’ı yükle. Firefox’ta yerleşik PWA yüklemesi desteklenmez.';
+ else guide='Desteklenen bir tarayıcıda menüdeki Uygulamayı yükle veya Ana ekrana ekle seçeneğini kullan.';
+ const detail=ios?'iOS’ta mağazadan APK/EXE indirilmez; ana ekrana web uygulaması eklenir.':android?'Android’de gerçek APK dağıtımı ayrıca Android paketi imzalanıp yayınlanmasını gerektirir.':(win||linux)?'Windows için EXE/MSIX, Pardus için DEB paketi ayrıca hazırlanıp imzalanmalıdır. Bu depo şu anda PWA/web sürümüdür; bu paketler bu ekrandan indirilmiyor.':'Katia şu anda tek bir HTTPS web uygulaması olarak dağıtılır.';
+ return '<section class="note" style="padding:16px;border:1px solid var(--ln);border-radius:14px;margin:10px 0"><b style="font-size:16px">KATIA · '+os+' · '+browser+'</b><p style="line-height:1.65;margin:10px 0">'+guide+'</p><button type="button" data-btn="installNow" style="width:100%;padding:13px;font-weight:800">'+action+'</button><div id="katiaInstallState" class="note" style="margin-top:10px">'+detail+'</div><p class="note" style="margin-top:8px">Kurulum için site HTTPS üzerinden açılmalı; manifest, ikonlar ve service worker erişilebilir olmalıdır.</p></section><div class="note">Desteklenen yol: Windows · Pardus/Linux · Android · iPhone/iPad. Bu bir PWA kurulumudur; mağaza uygulaması veya yerel kurulum paketi değildir.</div>';
 }
 let curTab='api';
 function tabsHtml(){return SETS.map(s=>`<button type="button" data-tab="${s.id}" class="${s.id===curTab?'on':''}">${s.t}</button>`).join('')}
@@ -1053,18 +1074,18 @@ $('#setBody').addEventListener('click',async e=>{
  if(b.dataset.del){const id=b.dataset.del;delete S.keys[id];if(S.prov===id)S.prov='';save();renderSet();return}
  const id=b.dataset.btn;if(!id)return;
  if(id==='installNow'){
-  if(matchMedia('(display-mode: standalone)').matches||navigator.standalone===true){toast('Katia zaten uygulama olarak yüklü.');return}
-  if(katiaInstallPrompt){katiaInstallPrompt.prompt();try{const choice=await katiaInstallPrompt.userChoice;const n=$('#katiaInstallState');if(n)n.textContent=choice.outcome==='accepted'?'Kurulum başlatıldı.':'Kurulum iptal edildi.'}catch(_){ }katiaInstallPrompt=null;return}
-  const ua=navigator.userAgent||'';
-  if(/iPhone|iPad|iPod/i.test(ua)){toast('Safari → Paylaş → Ana Ekrana Ekle.');}
-  else if(/OPR\//i.test(ua)||/Opera/i.test(ua)){
-   if(/Android/i.test(ua))toast('Opera / Opera GX menüsü → Ana ekrana ekle. Bu bir uygulama kısayoludur.');
-   else toast('Opera / Opera GX: Ctrl + D ile Katia’yı yer imlerine ekle veya sekmeye sağ tıklayıp Sabitle. Kurulum istemi desteklenmiyorsa bu yöntemle hızlıca açabilirsin.');
+  const n=$('#katiaInstallState');
+  if(matchMedia('(display-mode: standalone)').matches||navigator.standalone===true){if(n)n.textContent='Katia zaten bu tarayıcı profiline uygulama olarak yüklenmiş.';return}
+  if(katiaInstallPrompt){
+   const promptEvent=katiaInstallPrompt;katiaInstallPrompt=null;
+   try{await promptEvent.prompt();const choice=await promptEvent.userChoice;if(n)n.textContent=choice.outcome==='accepted'?'✓ Kurulum onaylandı. Uygulama cihazına ekleniyor.':'Kurulum iptal edildi; istediğinde tekrar deneyebilirsin.'}
+   catch(err){if(n)n.textContent='Otomatik kurulum açılamadı. Aşağıdaki tarayıcı menüsü yönergesini uygula.'}
+   return;
   }
-  else if(/Android/i.test(ua)){toast('Tarayıcı menüsü → Uygulamayı yükle / Ana ekrana ekle.');}
-  else if(/Linux/i.test(ua)){toast('Chromium menüsü → Uygulamayı yükle.');}
-  else if(/Windows/i.test(ua)){toast('Chrome/Edge menüsü → Uygulamaları yükle → Katia AI.');}
-  else toast('Tarayıcı menüsünde “Uygulamayı yükle” seçeneğini ara.');
+  const ua=navigator.userAgent||'',ios=/iPhone|iPad|iPod/i.test(ua)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1),android=/Android/i.test(ua),win=/Windows/i.test(ua),linux=/Linux/i.test(ua)&&!android;
+  const msg=ios?'Paylaş menüsü → Ana Ekrana Ekle → Ekle.':android?'Chrome: Menü ⋮ → Uygulamayı yükle / Ana ekrana ekle. Opera’da bu yalnızca kısayol olabilir.':win?'Edge/Chrome: adres çubuğundaki Yükle simgesi veya Menü → Uygulamaları yükle.':linux?'Pardus: Chromium/Chrome menüsü → Uygulamayı yükle.':'Tarayıcı menüsündeki Uygulamayı yükle seçeneğini kullan.';
+  if(n)n.textContent=msg;
+  toast(msg);
   return;
  }
  if(id==='vTest')speak(PM().hello);
