@@ -1083,7 +1083,12 @@ document.addEventListener('input',e=>{
 
 window.KatiaApp={
  setSoftwareMode(){S.persona='software';hist=[];apply();},
- askSoftware(text,img){return ai(text,img||null)},
+ async askSoftware(text,img){
+  if(!anyKey()&&!BUILTIN.includes(S.persona))throw new Error('API anahtarı bulunamadı. Ayarlar → API Anahtarları bölümünden Groq anahtarını ekleyip tekrar dene.');
+  const answer=await ai(String(text||'').trim(),img||null);
+  if(!answer)throw new Error('Model yanıt vermedi. API anahtarını, sağlayıcıyı ve internet bağlantısını kontrol edip tekrar gönder.');
+  return answer;
+ },
  async generateSoftwareImage(prompt){
   const key=cleanKey((S.keys.openai||{}).key);
   if(!key)throw new Error('Görsel üretmek için Ayarlar → API Anahtarları bölümüne OpenAI API anahtarı ekle.');
