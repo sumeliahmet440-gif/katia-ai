@@ -14,7 +14,7 @@ const games=[
  ['2048','🔢','2048','Aynı sayıları birleştir'],
  ['detective','🕵️','Dedektif Kuzenler','Dedektiflik yap, delilleri bul ve davaları çöz']
 ];
-const root=document.createElement('section');root.id='arcade';root.innerHTML='<div id="arcTop"><strong>🎮 KATIA ARCADE</strong><span id="arcStatus">11 OYUN</span><button id="arcBack">MENÜ</button><button id="arcClose">KAPAT ✕</button></div><div id="arcMenu"></div><div id="arcStage"><canvas id="arcCanvas" width="960" height="540"></canvas><div id="arcHint"></div><div id="arcPad"><div class="arc-side"><button class="arc-key" data-key="left">◀</button><button class="arc-key" data-key="right">▶</button></div><div class="arc-side"><button class="arc-key" data-key="down">▼</button><button class="arc-key" data-key="jump">⤒</button><button class="arc-key" data-key="action">●</button></div></div><div id="arcPortrait">📱<br>Oyunu yatay oynamak için telefonu çevir.</div></div>';
+const root=document.createElement('section');root.id='arcade';root.innerHTML='<div id="arcTop"><strong>🎮 KATIA ARCADE</strong><span id="arcStatus">11 OYUN</span><button id="arcBack">MENÜ</button><button id="arcClose">KAPAT ✕</button></div><div id="arcMenu"></div><div id="arcStage"><canvas id="arcCanvas" width="960" height="540"></canvas><div id="arcHint"></div><div id="arcPad"><div class="arc-side"><button class="arc-key" data-key="left">◀</button><button class="arc-key" data-key="right">▶</button></div><div class="arc-side"><button class="arc-key" data-key="up">▲</button><button class="arc-key" data-key="down">▼</button><button class="arc-key" data-key="jump">⤒</button><button class="arc-key" data-key="action">●</button></div></div><div id="arcPortrait">📱<br>Oyunu yatay oynamak için telefonu çevir.</div></div>';
 document.body.appendChild(root);
 const menu=$('#arcMenu'),stage=$('#arcStage'),canvas=$('#arcCanvas'),ctx=canvas.getContext('2d'),hint=$('#arcHint'),status=$('#arcStatus'),pad=$('#arcPad');
 const keys=new Set();let game='',state=null,raf=0,last=0,score=0,over=false,paused=false;
@@ -28,7 +28,7 @@ function unlock(){try{if(screen.orientation?.unlock)screen.orientation.unlock()}
 async function landscape(){try{if(matchMedia('(pointer:coarse)').matches){await root.requestFullscreen?.();await screen.orientation?.lock?.('landscape')}}catch(e){}}
 function start(id){if(id==='mario'){close();if(typeof window.openGame==='function')window.openGame('mario');else alert('Mario motoru yüklenemedi.');return}
 stop();game=id;score=0;over=false;paused=false;menu.style.display='none';stage.classList.add('on');canvas.dataset.game=id;status.textContent=games.find(g=>g[0]===id)?.[2]||id;pad.style.display=['memory','2048'].includes(id)?'none':'flex';say(help(id));state=init(id);last=performance.now();landscape();raf=requestAnimationFrame(loop)}
-function help(id){return ({dk:'← → hareket · ↑ zıpla · varillerden kaç',flappy:'Zıpla / dokun: kanat çırp',snake:'Oklar veya A-D-W-S',tetris:'← → hareket · ↓ hızlandır · ● döndür',breakout:'← → veya fare / dokunmatik',pong:'↑ ↓ veya ◀ ▶',space:'← → hareket · ● ateş',memory:'Kartlara dokunarak çiftleri bul', '2048':'Kaydır veya ok tuşlarıyla sayıları birleştir'})[id]||''}
+function help(id){return ({dk:'← → hareket · ↑ üst kata çık · ⤒ zıpla · varillerden kaç',flappy:'Zıpla / dokun: kanat çırp',snake:'Oklar veya A-D-W-S',tetris:'← → hareket · ↓ hızlandır · ● döndür',breakout:'← → veya fare / dokunmatik',pong:'↑ ↓ veya ◀ ▶',space:'← → hareket · ● ateş',memory:'Kartlara dokunarak çiftleri bul', '2048':'Kaydır veya ok tuşlarıyla sayıları birleştir'})[id]||''}
 function init(id){
  if(id==='dk')return {x:100,y:430,vx:0,vy:0,ground:true,barrels:[],tick:0,lives:3,goal:0,level:0,inv:0};
  if(id==='flappy')return {x:180,y:250,vy:0,pipes:[],tick:0,alive:true};
@@ -49,7 +49,7 @@ function update(dt){
  const k=keys;
  if(game==='dk'){
   let s=state;s.tick+=dt;s.inv=Math.max(0,s.inv-dt);s.vx=(k.has('left')?-1:0)+(k.has('right')?1:0);s.x=Math.max(30,Math.min(930,s.x+s.vx*250*dt));
-  if((k.has('jump')||k.has('up'))&&s.ground){s.vy=-470;s.ground=false}
+  if(k.has('jump')&&s.ground){s.vy=-470;s.ground=false}
   s.vy+=1050*dt;s.y+=s.vy*dt;const floors=[430,330,230,130,30];if(s.y>=floors[s.level]){s.y=floors[s.level];s.vy=0;s.ground=true}
   if(k.has('up')&&!s.upWas&&s.ground&&s.level<4){s.level++;s.y=floors[s.level];s.ground=true}s.upWas=k.has('up');if(k.has('down')&&!s.downWas&&s.ground&&s.level>0){s.level--;s.y=floors[s.level];s.ground=true}s.downWas=k.has('down');
   if(s.tick>1.15){s.tick=0;s.barrels.push({x:930,y:floors[Math.max(0,s.level-1)]-18,level:Math.max(0,s.level-1),v:190+score*.02})}
@@ -105,10 +105,10 @@ function draw(){
  ctx.imageSmoothingEnabled=false;base('#101b2b');let s=state;
  if(game==='dk'){
   rect(0,0,960,540,'#192b43');for(let bx=0;bx<960;bx+=80){rect(bx,0,48,540,'#203750');for(let wy=35;wy<400;wy+=65)rect(bx+12,wy,14,20,'#d4a85e')}
-  for(let i=0;i<5;i++){let y=430-i*100;rect(38,y,884,13,'#a85d32');rect(38,y+13,884,5,'#e8b66b');for(let x=45;x<920;x+=28)rect(x,y+18,4,7,'#76503a')}
+  for(let i=0;i<5;i++){let y=430-i*100;rect(38,y,884,13,'#a85d32');rect(38,y+13,884,5,'#e8b66b');for(let x=45;x<920;x+=28)rect(x,y+18,4,7,'#76503a');if(i<4){let lx=i%2?760:165;rect(lx,y-96,7,96,'#d6a35c');rect(lx+20,y-96,7,96,'#d6a35c');for(let ly=y-90;ly<y;ly+=12)rect(lx+7,ly,13,4,'#f0c77a')}}
   pixel(80,55,['..bbbb..','..bbbb..','.bbbbbb.','bbbbbbbb','bbkbbkbb','bbbbbbbb','.bccccb.','..cccc..','...cc...'],{b:'#754326',k:'#15151c',c:'#c18a56'},6);
   ctx.save();ctx.translate(s.x-18,s.y-32);pixel(0,0,['...ss...','..ssss..','.ssssss.','.spppps.','..pppp..','..rrrr..','.rrrrrr.','.rwwwwr.','..wwww..','..wwww..','.bb..bb.','.bb..bb.'],{s:'#e8b98b',p:'#20232b',r:'#d93f38',w:'#f1f1e8',b:'#2458a8'},5);ctx.restore();
-  s.barrels.forEach(b=>{rect(b.x-16,b.y-15,32,30,'#a65d2e');rect(b.x-16,b.y-9,32,5,'#e6b76c');rect(b.x-16,b.y+5,32,5,'#e6b76c');rect(b.x-3,b.y-15,6,30,'#6e3c25')});text('CAN: '+s.lives+'   KAT: '+s.goal,20,35);
+  s.barrels.forEach(b=>{rect(b.x-16,b.y-15,32,30,'#a65d2e');rect(b.x-16,b.y-9,32,5,'#e6b76c');rect(b.x-16,b.y+5,32,5,'#e6b76c');rect(b.x-3,b.y-15,6,30,'#6e3c25')});text('CAN: '+s.lives+'   KAT: '+s.goal,20,35);text('KAT: ▲ ÜST KAT · ⤒ ZIPLA',480,520,15,'#fff','center');
  }
  if(game==='flappy'){
   rect(0,0,960,540,'#72c7e7');for(let i=0;i<6;i++){rect(i*180,80+(i%2)*38,80,16,'#b8e2e8');rect(i*180+35,64+(i%2)*38,50,16,'#b8e2e8')}
