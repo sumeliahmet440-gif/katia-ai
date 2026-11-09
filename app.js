@@ -126,7 +126,7 @@ const PROV=[
  {id:'custom2',n:'Özel / Diğer 2 (OpenAI uyumlu)',t:'oa',base:'',m:'',vm:'',custom:1,tag:'Herhangi bir sağlayıcı / yerel sunucu'},
  {id:'custom3',n:'Özel / Diğer 3 (OpenAI uyumlu)',t:'oa',base:'',m:'',vm:'',custom:1,tag:'Herhangi bir sağlayıcı / yerel sunucu'}
 ];
-const BUILTIN=Object.keys(P); // tüm modlarda API anahtarı sunucudan otomatik gelir (telefon dahil)
+const BUILTIN=Object.keys(P).filter(k=>k!=='software'); // tüm modlarda API anahtarı sunucudan otomatik gelir (telefon dahil)
 const PV=id=>id==='builtin'?{id:'builtin',n:'Katia (hazır anahtar)',t:'oa'}:PROV.find(p=>p.id===id);
 const serverBase=()=>((window.KATIA_SERVER||S.relayUrl||'')+'').trim().replace(/\/+$/,'');
 const prankOn=()=>(ls('katia_prank',0)||0)>Date.now();
@@ -324,6 +324,7 @@ function sysPrompt(){
  return `Sen "${nm}" adlı sesli yapay zeka asistanısın (Katia AI uygulaması, LekoStudio yapımı). Şu an "${p.n}" kişiliğindesin. ${p.sys}`+
  `${S.uname&&!p.locked?` Kullanıcıya "${S.uname}" diye hitap et.`:''} Cevap dili: ${LN[S.lang]||'Türkçe'}. `+
  `Cevapların sesli okunacak: ${L}, düz metin; madde işareti, markdown ve emoji kullanma. `+
+ `LekoStudio'nun kurucusu sorulursa şu ifadeyi aynen kullan: "LekoAhmet gerçek adıyla Ahmet ............ adlı insan tarafından kurulmuştur." Bu bilgi dışında doğrulanmamış biyografi veya tarih uydurma; yanıt en fazla 500 kelime olsun. `+
  `Seni kimin yaptığı/tasarladığı/geliştirdiği sorulursa "LekoStudio tarafından yapıldım." de; altında hangi yapay zeka modelinin çalıştığını söyleme. `+
  `Kullanıcı bir görsel gönderdiyse veya kamera karesi eklendiyse görseli dikkatle analiz edip gördüklerini somut olarak anlat. `+
  `Şu an: ${new Date().toLocaleString('tr-TR')}. Konum: ${W.city||'bilinmiyor'}. Hava: ${W.txt||'bilinmiyor'}.`+
