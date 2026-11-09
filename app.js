@@ -968,8 +968,8 @@ function katiaInstallHtml(){
  const ua=navigator.userAgent||'',platform=navigator.platform||'';
  const ios=/iPhone|iPad|iPod/i.test(ua)||(platform==='MacIntel'&&navigator.maxTouchPoints>1);
  const android=/Android/i.test(ua),win=/Windows/i.test(ua),linux=/Linux/i.test(ua)&&!android;
- const opera=/OPR\\//i.test(ua)||/Opera/i.test(ua),edge=/Edg\\//i.test(ua),samsung=/SamsungBrowser/i.test(ua);
- const firefox=/Firefox\\//i.test(ua),chrome=/Chrome\\//i.test(ua)&&!edge&&!opera&&!samsung;
+ const opera=/OPR\//i.test(ua)||/Opera/i.test(ua),edge=/Edg\//i.test(ua),samsung=/SamsungBrowser/i.test(ua);
+ const firefox=/Firefox\//i.test(ua),chrome=/Chrome\\//i.test(ua)&&!edge&&!opera&&!samsung;
  const standalone=matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
  const os=ios?'iPhone / iPad':android?'Android':win?'Windows':linux?'Pardus / Linux':'Bu cihaz';
  const browser=opera?'Opera / Opera GX':edge?'Microsoft Edge':samsung?'Samsung Internet':firefox?'Firefox':chrome?'Google Chrome':/Safari/i.test(ua)?'Safari':'tarayıcın';
