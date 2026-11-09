@@ -15,3 +15,6 @@
 @media(orientation:portrait) and (pointer:coarse){#arcPortrait{display:flex}#arcPad{bottom:7px}}
 @media(hover:hover) and (pointer:fine){#arcPad{opacity:.35}#arcPad:hover{opacity:1}}
 @media(max-width:650px){#arcTop{height:46px;min-height:46px}#arcMenu{grid-template-columns:repeat(2,minmax(0,1fr));padding:12px;gap:9px}.arc-card{min-height:90px;padding:11px}#arcStage{padding:3px}#arcCanvas{width:100%;max-height:100%;border-radius:7px}#arcPad{padding:0 7px;bottom:5px}.arc-key{width:56px;height:56px;border-radius:15px}}
+
+#arcPad .arc-side{gap:7px}
+.arc-key{touch-action:none;-webkit-user-select:none;user-select:none}
