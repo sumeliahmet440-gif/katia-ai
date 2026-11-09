@@ -1,0 +1,37 @@
+#katiaSoftware{position:fixed;inset:0;z-index:100010;display:none;background:#f7f7f5;color:#262624;font-family:Inter,system-ui,sans-serif}
+#katiaSoftware.on{display:grid;grid-template-columns:250px minmax(0,1fr)}
+#ksSide{background:#f0efeb;border-right:1px solid #dddcd6;padding:18px 14px;display:flex;flex-direction:column;gap:12px}
+#ksBrand{font-weight:800;font-size:18px;letter-spacing:-.04em;padding:8px 10px}
+.ks-sidebtn{border:0;background:transparent;text-align:left;border-radius:9px;padding:11px 12px;color:#373733;cursor:pointer}
+.ks-sidebtn:hover{background:#e4e2dc}
+#ksProjects{margin-top:20px;color:#85847d;font-size:11px;font-weight:800;letter-spacing:.12em;padding:0 10px}
+#ksMain{display:flex;flex-direction:column;min-width:0;min-height:0;position:relative}
+#ksTop{height:58px;flex:none;border-bottom:1px solid #e5e3dd;display:flex;align-items:center;justify-content:space-between;padding:0 22px;background:#fafaf8}
+#ksTop strong{font-size:15px}#ksTop button{background:transparent;border:1px solid #d8d6cf;color:#333;border-radius:9px;padding:8px 12px}
+#ksMessages{flex:1;overflow:auto;width:min(920px,100%);margin:0 auto;padding:30px 24px 180px;display:flex;flex-direction:column;gap:22px}
+.ks-welcome{margin:auto;text-align:center;max-width:680px;padding:30px 10px}
+.ks-welcome h1{font-size:clamp(26px,4vw,38px);font-weight:550;letter-spacing:-.04em;margin:0 0 12px}
+.ks-welcome p{color:#77766f;line-height:1.7}
+.ks-msg{max-width:100%;line-height:1.7;font-size:15px;white-space:pre-wrap;overflow-wrap:anywhere}
+.ks-msg.user{align-self:flex-end;background:#eeede8;border-radius:18px;padding:12px 16px;max-width:82%}
+.ks-msg.assistant{align-self:stretch}
+.ks-code{border:1px solid #deddd6;border-radius:12px;overflow:hidden;margin:14px 0;background:#fff}
+.ks-codehead{background:#f0efeb;display:flex;justify-content:space-between;align-items:center;padding:8px 12px;font-size:12px;color:#666}
+.ks-codehead button,.ks-download{border:1px solid #d7d5cd;background:#fff;color:#30302c;border-radius:7px;padding:6px 10px;cursor:pointer}
+.ks-code pre{margin:0;padding:16px;overflow:auto;max-height:480px;background:#1c1e24;color:#e6e7eb;font:13px/1.65 ui-monospace,Consolas,monospace;white-space:pre}
+.ks-image{max-width:min(100%,680px);border-radius:14px;border:1px solid #deddd6;display:block;margin:12px 0}
+#ksComposerWrap{position:absolute;bottom:0;left:0;right:0;padding:20px 22px 18px;background:linear-gradient(transparent,#f7f7f5 20%)}
+#ksComposer{width:min(900px,100%);margin:0 auto;border:1px solid #d8d6cf;border-radius:18px;background:#fff;box-shadow:0 8px 35px #0000000b;padding:12px}
+#ksPrompt{width:100%;resize:vertical;min-height:82px;max-height:220px;border:0;outline:0;background:transparent;color:#262624;font:15px/1.6 system-ui;padding:7px}
+#ksActions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+#ksActions button{border:1px solid #dddcd5;background:#f8f7f3;color:#34342f;border-radius:9px;padding:8px 11px;cursor:pointer;font-size:12px}
+#ksActions button.primary{background:#252521;color:white;border-color:#252521;margin-left:auto}
+#ksStatus{font-size:11px;color:#88877f;padding:6px 4px 0}
+#ksMedia{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:8px 0}
+#ksImagePrompt{display:none;margin-top:10px;gap:8px}#ksImagePrompt.on{display:flex}
+#ksImagePrompt input{flex:1;min-width:0;border:1px solid #deddd6;border-radius:9px;padding:10px}
+#ksVoice.on{background:#fce5e5!important;border-color:#d66!important}
+@media(max-width:760px){#katiaSoftware.on{grid-template-columns:1fr}#ksSide{display:none}#ksTop{height:52px;padding:0 12px}#ksMessages{padding:18px 14px 205px}#ksComposerWrap{padding:10px 10px max(12px,env(safe-area-inset-bottom))}#ksPrompt{min-height:70px}#ksActions button{padding:8px 9px}}
+.mod .orb-premium{overflow:visible;filter:drop-shadow(0 0 7px color-mix(in srgb,var(--mc) 55%,transparent))}
+.mod .orb-premium .orb-track{transform-origin:32px 32px;animation:ksOrbit 9s linear infinite}
+@keyframes ksOrbit{to{transform:rotate(360deg)}}
