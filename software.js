@@ -53,7 +53,7 @@ async function send(){
  }
  busy=false;$('#ksSend').disabled=false;
 }
-$('#ksSend').onclick=send;$('#ksPrompt').addEventListener('keydown',e=>{if(e.key==='Enter'&&(e.ctrlKey||e.metaKey)){e.preventDefault();send()}});
+$('#ksSend').type='button';$('#ksSend').onclick=send;$('#ksPrompt').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send()}});
 $('#ksBack').onclick=close;$('#ksNew').onclick=()=>{$('#ksMessages').innerHTML='<div class="ks-welcome" id="ksWelcome"><h1>Yeni bir şeye başlayalım.</h1><p>Ne geliştirmek istersin?</p></div>';lastAnswer='';$('#ksPrompt').focus()};
 $('#ksRecent').onclick=()=>{$('#ksStatus').textContent='Bu oturumdaki konuşmalar ekranda tutulur; kalıcı bulut proje geçmişi henüz bağlı değil.'};
 $('#ksAttach').onclick=()=>$('#ksFile').click();
