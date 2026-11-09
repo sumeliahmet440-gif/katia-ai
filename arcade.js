@@ -22,7 +22,7 @@ const keys=new Set();let game='',state=null,raf=0,last=0,score=0,over=false,paus
 menu.innerHTML=games.map(g=>'<button class="arc-card" data-game="'+g[0]+'"><b>'+g[1]+' '+g[2]+'</b><small>'+g[3]+'</small></button>').join('');
 const say=(t)=>{hint.textContent=t};
 function open(){root.classList.add('on');showMenu()}
-function showMenu(){stop();menu.style.display='grid';stage.classList.remove('on');status.textContent='11 OYUN';game='';keys.clear();unlock();}
+function showMenu(){stop();menu.style.display='grid';stage.classList.remove('on');status.textContent='12 OYUN';game='';keys.clear();unlock();}
 function stop(){cancelAnimationFrame(raf);raf=0;keys.clear();activePointers.clear();pad.querySelectorAll('button').forEach(b=>b.classList.remove('down'))}
 function close(){showMenu();root.classList.remove('on')}
 function unlock(){try{if(screen.orientation?.unlock)screen.orientation.unlock()}catch(e){}try{if(document.fullscreenElement)document.exitFullscreen?.().catch(()=>{})}catch(e){}}
@@ -73,7 +73,7 @@ function update(dt){
  }else if(game==='tetris'){
   let s=state;s.drop+=dt;if(!s.piece)newPiece(s);if(k.has('left')){if(!s.leftWas){movePiece(s,-1,0);s.leftWas=true}}else s.leftWas=false;if(k.has('right')){if(!s.rightWas){movePiece(s,1,0);s.rightWas=true}}else s.rightWas=false;
   if(k.has('action')){if(!s.actWas){rotate(s);s.actWas=true}}else s.actWas=false;
-  if(s.drop>(k.has('down')?.06:.55)){s.drop=0;if(!movePiece(s,0,1)){lockPiece(s)}}
+  if(s.drop>((k.has('down') ? 0.06 : 0.55))){s.drop=0;if(!movePiece(s,0,1)){lockPiece(s)}}
  }else if(game==='breakout'){
   let s=state;s.paddle+=(k.has('left')?-1:0)*560*dt;s.paddle+=(k.has('right')?1:0)*560*dt;s.paddle=Math.max(55,Math.min(905,s.paddle));
   const oy=s.y;s.x+=s.vx*dt;s.y+=s.vy*dt;
