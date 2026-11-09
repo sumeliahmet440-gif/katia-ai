@@ -23,6 +23,7 @@ const IC={
  shield:'M12 1 3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-1 15-4-4 1.4-1.4L11 13.2l5.6-5.6L18 9l-7 7z',
  panel:'M3 3h8v8H3V3zm10 0h8v8h-8V3zM3 13h8v8H3v-8zm10 0h8v8h-8v-8z',
  modes:'M12 2l2.4 6.6L21 11l-6.6 2.4L12 20l-2.4-6.6L3 11l6.6-2.4L12 2zM19 15l.9 2.1L22 18l-2.1.9L19 21l-.9-2.1L16 18l2.1-.9L19 15z',
+ download:'M5 20h14v-2H5v2zM11 3h2v9l3.5-3.5 1.4 1.4L12 16.8 6.1 9.9l1.4-1.4L11 12V3z',
  gear:'M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58a.49.49 0 0 0 .12-.61l-1.92-3.32a.49.49 0 0 0-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54a.48.48 0 0 0-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96a.48.48 0 0 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58a.49.49 0 0 0-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6a3.6 3.6 0 1 1 0-7.2 3.6 3.6 0 0 1 0 7.2z',
  flip:'M12 6V3L8 7l4 4V8a4 4 0 0 1 4 4c0 .7-.2 1.4-.5 2l1.5 1.5c.6-1 1-2.2 1-3.5a6 6 0 0 0-6-6zm-4.5 2.5C6.9 9.5 6.5 10.7 6.5 12a6 6 0 0 0 6 6v3l4-4-4-4v3a4 4 0 0 1-4-4c0-.7.2-1.4.5-2L7.5 8.5z'
 };
@@ -157,9 +158,10 @@ const PM=()=>P[S.persona];
 
 function colors(){const p=PM(),o=p.locked?{}:(S.pc[S.persona]||{});return{a:o.a||p.a,b:o.b||p.b,bg:o.bg||p.bg||'#050403',tx:o.tx||p.tx||'#f2e6cf'}}
 function badge(a,b,k){
+ // Katia'nin özgün simgesi bilerek aynen korunur.
  if(k==='katia')return`<svg class="bd" viewBox="0 0 64 64"><rect width="64" height="64" fill="#000"/><circle cx="32" cy="32" r="19" fill="none" stroke="${a}" stroke-width="3.2"/><circle cx="32" cy="32" r="6.6" fill="${b}"/></svg>`;
  const id='orb-'+String(k||'mode').replace(/[^a-z0-9]/gi,'');
- return`<svg class="bd orb-premium" viewBox="0 0 64 64" role="img" aria-label="${esc(k||'AI')}"><defs><radialGradient id="${id}-g"><stop offset="0" stop-color="${b}"/><stop offset=".42" stop-color="${a}"/><stop offset="1" stop-color="#07111d"/></radialGradient><linearGradient id="${id}-s" x1="0" y1="0" x2="1" y2="1"><stop stop-color="${b}"/><stop offset="1" stop-color="${a}"/></linearGradient></defs><circle cx="32" cy="32" r="29" fill="#050b14" stroke="${a}" stroke-opacity=".55"/><circle class="orb-track" cx="32" cy="32" r="23" fill="none" stroke="${a}" stroke-width="1.4" stroke-dasharray="3 4"/><ellipse cx="32" cy="32" rx="19" ry="9" fill="none" stroke="${b}" stroke-opacity=".75" transform="rotate(-38 32 32)"/><ellipse cx="32" cy="32" rx="19" ry="9" fill="none" stroke="${a}" stroke-opacity=".8" transform="rotate(38 32 32)"/><circle cx="32" cy="32" r="13.5" fill="url(#${id}-g)" stroke="url(#${id}-s)" stroke-width="1.8"/><circle cx="27" cy="27" r="4" fill="#fff" opacity=".7"/><circle cx="32" cy="32" r="3.2" fill="#fff" opacity=".9"/><circle cx="12" cy="25" r="2" fill="${b}"/><circle cx="51" cy="39" r="2" fill="${a}"/><path d="M19 47 Q32 55 45 47" fill="none" stroke="${b}" stroke-opacity=".7" stroke-width="1.2"/></svg>`
+ return`<svg class="bd orb-premium" viewBox="0 0 64 64" role="img" aria-label="${esc(k||'AI')}"><defs><radialGradient id="${id}-g"><stop offset="0" stop-color="${b}"/><stop offset=".5" stop-color="${a}"/><stop offset="1" stop-color="#07111d"/></radialGradient><linearGradient id="${id}-s" x1="0" y1="0" x2="1" y2="1"><stop stop-color="${b}"/><stop offset="1" stop-color="${a}"/></linearGradient></defs><circle cx="32" cy="32" r="29" fill="#050b14" stroke="${a}" stroke-opacity=".75" stroke-width="1.5"/><circle class="orb-track" cx="32" cy="32" r="24" fill="none" stroke="${a}" stroke-width="1.6" stroke-dasharray="2 3"/><ellipse class="orb-track orb-track-two" cx="32" cy="32" rx="21" ry="10" fill="none" stroke="${b}" stroke-width="1.5" transform="rotate(-38 32 32)"/><ellipse cx="32" cy="32" rx="21" ry="10" fill="none" stroke="${a}" stroke-opacity=".7" transform="rotate(38 32 32)"/><circle cx="32" cy="32" r="16" fill="url(#${id}-g)" stroke="url(#${id}-s)" stroke-width="2"/><path d="M21 29 Q25 23 29 29 M35 29 Q39 23 43 29" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/><ellipse cx="25.5" cy="30" rx="2.2" ry="3" fill="#fff"/><ellipse cx="38.5" cy="30" rx="2.2" ry="3" fill="#fff"/><path d="M25 39 Q32 45 39 39" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round"/><circle cx="13" cy="20" r="2" fill="${b}"/><circle cx="51" cy="44" r="2" fill="${a}"/></svg>`
 }
 function symStr(){return S.usym||''}
 function apply(){
@@ -1008,8 +1010,9 @@ function renderSet(){
  $('#setBody').innerHTML=(s.note?`<div class="note">${s.note}</div>`:'')+lockNote+(s.html?s.html():s.items.map(ctl).join(''));
  openIds.forEach(id=>{const e=$(`#setBody [data-pk="${id}"]`);if(e)e.closest('details').open=true});
 }
-function openSet(tab){if(tab)curTab=tab;renderSet();closeAll();$('#mSet').classList.add('on')}
+function openSet(tab){if(tab)curTab=tab;renderSet();closeAll();$('#mSet').classList.add('on');$('#mSet').setAttribute('aria-label',curTab==='install'?'Uygulamayı indirme ekranı':'Ayarlar')}
 $('#setB').onclick=()=>openSet();
+$('#installB').onclick=()=>openSet('install');
 $('#tabs').onclick=e=>{const b=e.target.closest('[data-tab]');if(b){curTab=b.dataset.tab;renderSet();$('#setBody').scrollTop=0}};
 function onSetInput(e){
  const el=e.target;
