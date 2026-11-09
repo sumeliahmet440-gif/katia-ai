@@ -29,7 +29,7 @@ function start(id){if(id==='mario'){close();if(typeof window.openGame==='functio
 stop();game=id;score=0;over=false;paused=false;menu.style.display='none';stage.classList.add('on');canvas.dataset.game=id;status.textContent=games.find(g=>g[0]===id)?.[2]||id;pad.style.display=['memory','2048'].includes(id)?'none':'flex';say(help(id));state=init(id);last=performance.now();landscape();raf=requestAnimationFrame(loop)}
 function help(id){return ({dk:'← → hareket · ↑ zıpla · varillerden kaç',flappy:'Zıpla / dokun: kanat çırp',snake:'Oklar veya A-D-W-S',tetris:'← → hareket · ↓ hızlandır · ● döndür',breakout:'← → veya fare / dokunmatik',pong:'↑ ↓ veya ◀ ▶',space:'← → hareket · ● ateş',memory:'Kartlara dokunarak çiftleri bul', '2048':'Kaydır veya ok tuşlarıyla sayıları birleştir'})[id]||''}
 function init(id){
- if(id==='dk')return {x:100,y:430,vx:0,vy:0,ground:true,barrels:[],tick:0,lives:3,goal:0};
+ if(id==='dk')return {x:100,y:430,vx:0,vy:0,ground:true,barrels:[],tick:0,lives:3,goal:0,level:0,inv:0};
  if(id==='flappy')return {x:180,y:250,vy:0,pipes:[],tick:0,alive:true};
  if(id==='snake')return {body:[[10,10],[9,10],[8,10]],dir:[1,0],next:[1,0],food:[15,10],tick:0};
  if(id==='tetris')return {grid:Array.from({length:20},()=>Array(10).fill(0)),piece:null,tick:0,drop:0,lines:0};
@@ -47,13 +47,14 @@ function gameOver(t){over=true;say(t+' · Yeniden başlamak için ekrana dokun v
 function update(dt){
  const k=keys;
  if(game==='dk'){
-  let s=state;s.tick+=dt;s.vx=(k.has('left')?-1:0)+(k.has('right')?1:0);s.x=Math.max(30,Math.min(930,s.x+s.vx*220*dt));
-  if((k.has('jump')||k.has('up'))&&s.ground){s.vy=-430;s.ground=false}
-  s.vy+=900*dt;s.y+=s.vy*dt;if(s.y>430){s.y=430;s.vy=0;s.ground=true}
-  if(s.tick>1.3){s.tick=0;s.barrels.push({x:930,y:390,v:170})}
+  let s=state;s.tick+=dt;s.inv=Math.max(0,s.inv-dt);s.vx=(k.has('left')?-1:0)+(k.has('right')?1:0);s.x=Math.max(30,Math.min(930,s.x+s.vx*250*dt));
+  if((k.has('jump')||k.has('up'))&&s.ground){s.vy=-470;s.ground=false}
+  s.vy+=1050*dt;s.y+=s.vy*dt;const floors=[430,330,230,130,30];if(s.y>=floors[s.level]){s.y=floors[s.level];s.vy=0;s.ground=true}
+  if(k.has('up')&&!s.upWas&&s.ground&&s.level<4){s.level++;s.y=floors[s.level];s.ground=true}s.upWas=k.has('up');if(k.has('down')&&!s.downWas&&s.ground&&s.level>0){s.level--;s.y=floors[s.level];s.ground=true}s.downWas=k.has('down');
+  if(s.tick>1.15){s.tick=0;s.barrels.push({x:930,y:floors[Math.max(0,s.level-1)]-18,level:Math.max(0,s.level-1),v:190+score*.02})}
   s.barrels.forEach(b=>b.x-=b.v*dt);s.barrels=s.barrels.filter(b=>b.x>-30);
-  if(s.barrels.some(b=>Math.abs(b.x-s.x)<32&&Math.abs(b.y-s.y)<34)){s.lives--;s.x=100;s.y=430;s.barrels=[];if(s.lives<=0)gameOver('Oyun bitti')}
-  if(s.x>900){s.goal++;s.x=40;s.barrels=[];score+=100;s.lives=Math.min(3,s.lives+1)}
+  if(s.inv<=0&&s.barrels.some(b=>Math.abs(b.x-s.x)<34&&Math.abs(b.y-(s.y-10))<32)){s.lives--;s.inv=1.3;s.x=100;s.y=floors[s.level];s.barrels=[];if(s.lives<=0)gameOver('Oyun bitti')}
+  if(s.level===4&&s.x>875){s.goal++;score+=150;s.level=0;s.x=55;s.y=floors[0];s.barrels=[];s.lives=Math.min(3,s.lives+1)}
  }else if(game==='flappy'){
   let s=state;s.tick+=dt;if(k.has('jump')||k.has('action')){if(!s.was)s.vy=-330;s.was=true}else s.was=false;
   s.vy+=900*dt;s.y+=s.vy*dt;
@@ -100,13 +101,13 @@ function rotate(s){let a=s.piece.shape,b=a[0].map((_,i)=>a.map(r=>r[i]).reverse(
 function lockPiece(s){s.piece.shape.forEach((r,y)=>r.forEach((v,x)=>{if(v&&s.piece.y+y>=0)s.grid[s.piece.y+y][s.piece.x+x]=1}));let n=0;s.grid=s.grid.filter(r=>{if(r.every(v=>v)){n++;return false}return true});while(s.grid.length<20)s.grid.unshift(Array(10).fill(0));score+=n*n*100;s.lines+=n;s.piece=null}
 function draw(){
  base();let s=state;
- if(game==='dk'){rect(0,470,960,70,'#294d32');for(let i=0;i<4;i++){let y=430-i*105;rect(60,y,840,10,'#b46b34');for(let x=90;x<900;x+=80)rect(x,y+10,7,12,'#d49a4c')}text('🦍',70,100,54);text('👨🏻',s.x,s.y+8,34);s.barrels.forEach(b=>text('🛢️',b.x,b.y,28));text('CAN: '+s.lives+'   KAT: '+s.goal,20,35)}
- if(game==='flappy'){rect(0,0,960,540,'#73c7e9');s.pipes.forEach(p=>{rect(p.x,0,55,p.top,'#21884b');rect(p.x,p.top+p.gap,55,540-p.top-p.gap,'#21884b')});text('🐤',s.x,s.y+12,30);rect(0,515,960,25,'#b38a45');text('SKOR '+score,25,40)}
+ if(game==='dk'){rect(0,0,960,540,'#18243a');for(let i=0;i<5;i++){let y=430-i*100;rect(45,y,870,12,'#a85d32');for(let x=55;x<910;x+=70)rect(x,y+12,6,10,'#e3b36a')}ctx.save();ctx.translate(90,90);ctx.fillStyle='#70442c';ctx.beginPath();ctx.ellipse(0,-8,24,30,0,0,7);ctx.fill();ctx.fillStyle='#c58a55';ctx.beginPath();ctx.ellipse(0,2,15,12,0,0,7);ctx.fill();ctx.fillStyle='#fff';ctx.fillRect(-10,-18,6,6);ctx.fillRect(5,-18,6,6);ctx.restore();ctx.save();ctx.translate(s.x,s.y);ctx.fillStyle='#e8b98b';ctx.beginPath();ctx.arc(0,-18,11,0,7);ctx.fill();ctx.fillStyle='#d83b35';ctx.fillRect(-12,-8,24,23);ctx.fillStyle='#2458a8';ctx.fillRect(-11,13,9,15);ctx.fillRect(2,13,9,15);ctx.restore();s.barrels.forEach(b=>{ctx.fillStyle='#b66b32';ctx.beginPath();ctx.arc(b.x,b.y,17,0,7);ctx.fill();ctx.strokeStyle='#f2c078';ctx.lineWidth=4;ctx.beginPath();ctx.arc(b.x,b.y,11,0,7);ctx.stroke()});text('CAN: '+s.lives+'   KAT: '+s.goal,20,35)}
+ if(game==='flappy'){rect(0,0,960,540,'#73c7e9');s.pipes.forEach(p=>{rect(p.x,0,55,p.top,'#21884b');rect(p.x,p.top+p.gap,55,540-p.top-p.gap,'#21884b')});ctx.fillStyle='#f6cf45';ctx.beginPath();ctx.ellipse(s.x,s.y,18,14,0,0,7);ctx.fill();ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(s.x+7,s.y-5,5,0,7);ctx.fill();ctx.fillStyle='#222';ctx.beginPath();ctx.arc(s.x+9,s.y-5,2,0,7);ctx.fill();ctx.fillStyle='#ed7939';ctx.beginPath();ctx.moveTo(s.x+15,s.y);ctx.lineTo(s.x+29,s.y+4);ctx.lineTo(s.x+15,s.y+7);ctx.fill();rect(0,515,960,25,'#b38a45');text('SKOR '+score,25,40)}
  if(game==='snake'){rect(0,0,960,540,'#101d25');for(let x=0;x<30;x++)for(let y=0;y<16;y++){ctx.strokeStyle='#1b303b';ctx.strokeRect(x*32,y*32,32,32)}text('🍎',s.food[0]*32+16,s.food[1]*32+27,23,'#fff','center');s.body.forEach((p,i)=>rect(p[0]*32+2,p[1]*32+2,28,28,i?'#42a86b':'#a4ef70'));text('SKOR '+score,20,525)}
  if(game==='tetris'){s.grid.forEach((r,y)=>r.forEach((v,x)=>{if(v){rect(270+x*22,40+y*22,20,20,'#45b7a0')}}));if(s.piece)s.piece.shape.forEach((r,y)=>r.forEach((v,x)=>{if(v)rect(270+(s.piece.x+x)*22,40+(s.piece.y+y)*22,20,20,'#f3bd4e')}));text('TETRIS',480,25,20);text('SATIR '+s.lines,540,100,22)}
  if(game==='breakout'){s.bricks.forEach(r=>r.forEach(b=>{if(b.on)rect(b.x,b.y,60,20,'#e77d52')}));rect(s.paddle-60,460,120,13,'#e8e8ff');ctx.beginPath();ctx.arc(s.x,s.y,9,0,7);ctx.fillStyle='#fff';ctx.fill();text('SKOR '+score,20,35)}
  if(game==='pong'){rect(20,s.p-50,14,100,'#f7f7f7');rect(926,s.ai-50,14,100,'#f7f7f7');ctx.setLineDash([12,12]);ctx.strokeStyle='#71869b';ctx.beginPath();ctx.moveTo(480,0);ctx.lineTo(480,540);ctx.stroke();ctx.setLineDash([]);ctx.beginPath();ctx.arc(s.x,s.y,11,0,7);ctx.fillStyle='#fff';ctx.fill();text('SEN '+score,400,45,26)}
- if(game==='space'){text('🚀',s.x,500,38);s.bullets.forEach(b=>rect(b.x-3,b.y,6,18,'#f9ed69'));s.enemies.forEach(e=>text('👾',e.x,e.y+10,27));text('CAN '+s.lives+'  SKOR '+score,20,35)}
+ if(game==='space'){ctx.save();ctx.translate(s.x,485);ctx.fillStyle='#a9e8ff';ctx.beginPath();ctx.moveTo(0,-22);ctx.lineTo(16,18);ctx.lineTo(0,10);ctx.lineTo(-16,18);ctx.closePath();ctx.fill();ctx.fillStyle='#ffb84d';ctx.fillRect(-5,15,10,9);ctx.restore();s.bullets.forEach(b=>rect(b.x-3,b.y,6,18,'#f9ed69'));s.enemies.forEach(e=>{ctx.fillStyle='#9a73db';ctx.beginPath();ctx.arc(e.x,e.y,15,0,7);ctx.fill();ctx.fillStyle='#fff';ctx.fillRect(e.x-8,e.y-4,5,5);ctx.fillRect(e.x+4,e.y-4,5,5)});text('CAN '+s.lives+'  SKOR '+score,20,35)}
  if(game==='memory'){for(let i=0;i<16;i++){let x=190+(i%4)*148,y=45+Math.floor(i/4)*116,c=s.cards[i];rect(x,y,128,96,c.show||c.done?'#27647a':'#25405b');text(c.show||c.done?String(c.v):'?',x+64,y+62,38,'#fff','center')}text('HAMLE '+s.moves,20,35)}
  if(game==='2048'){rect(290,35,380,470,'#766c61');for(let i=0;i<16;i++){let x=300+(i%4)*91,y=45+Math.floor(i/4)*112,v=s.b[i];rect(x,y,82,102,v?'#'+({2:'eee4da',4:'ede0c8',8:'f2b179',16:'f59563',32:'f67c5f',64:'f65e3b',128:'edcf72',256:'edcc61',512:'edc850',1024:'edc53f',2048:'edc22e'}[v]||'3c3a32'):'#9b8d80');if(v)text(String(v),x+41,y+62,Math.min(27,v>999?21:27),'#3c352e','center')}text('2048 · HAMLE '+s.turns,20,30,20)}
  if(over){rect(250,205,460,120,'#06111de8');text('OYUN BİTTİ',480,255,34,'#fff','center');text('SKOR '+score+' · Yeniden başlamak için dokun',480,295,18,'#fff','center')}
