@@ -312,7 +312,7 @@ async function callProv1(id,sys,msgs,img,o){
  return out.replace(/<think>[\s\S]*?<\/think>/g,'').trim();
 }
 async function callBuiltin(sys,msgs,img,o){ // sunucudaki hazır anahtar (Katia / Ayaz / Horror)
- const r=await net(serverBase()+'/api/chat',{'Content-Type':'application/json','x-did':window.KDID||''},JSON.stringify({persona:S.persona,sys,msgs,img:img||null,max:o.max,temp:o.temp}));
+ const r=await net(serverBase()+'/api/chat',{'Content-Type':'application/json','x-did':window.KDID||'','x-groq-key':cleanKey((S.keys.groq||{}).key)},JSON.stringify({persona:S.persona,sys,msgs,img:img||null,max:o.max,temp:o.temp}));
  if(!r.ok){const e=new Error(errMsg(r.j,r.status));e.status=r.status;throw e}
  const c=(((r.j.choices||[])[0]||{}).message||{}).content,out=Array.isArray(c)?c.map(x=>x.text||'').join(''):(c||'');
  if(!out)throw new Error('Boş cevap geldi.');
