@@ -88,8 +88,11 @@ function update(dt){
   if(s.y<14){s.y=14;s.vy=Math.abs(s.vy)}if(s.y>526){s.y=526;s.vy=-Math.abs(s.vy)}
   if(s.vx<0&&s.x<48&&Math.abs(s.y-s.p)<68){s.x=48;s.vx=Math.abs(s.vx)*1.04;s.vy+=(s.y-s.p)*1.3}
   if(s.vx>0&&s.x>912&&Math.abs(s.y-s.ai)<68){s.x=912;s.vx=-Math.abs(s.vx)*1.02;s.vy+=(s.y-s.ai)*.9}
-  if(s.x<0){s.points++;score=s.points;if(s.points>=7)gameOver('Kazandın! 7 sayı');else{s.x=480;s.y=270;s.vx=260;s.vy=(Math.random()-.5)*220}}
-  if(s.x>960){s.points--;if(s.points<=-7)gameOver('Rakip kazandı');else{s.x=480;s.y=270;s.vx=-260;s.vy=(Math.random()-.5)*220}}
+  if(s.x<0){s.points--;if(s.points<=-7)gameOver('Rakip kazandı');else{s.x=480;s.y=270;s.vx=260;s.vy=(Math.random()-.5)*220}}
+  if(s.x>960){s.points++;score=s.points;if(s.points>=7)gameOver('Kazandın! 7 sayı');else{s.x=480;s.y=270;s.vx=-260;s.vy=(Math.random()-.5)*220}}
+ }else if(game==='2048'){
+  const dir=k.has('left')?'left':k.has('right')?'right':k.has('up')?'up':k.has('down')?'down':'';
+  if(dir&&!s.moveWas){move2048(s,dir);s.moveWas=true}else if(!dir)s.moveWas=false;
  }else if(game==='space'){
   let s=state;s.tick+=dt;s.x+=(k.has('left')?-1:0)*300*dt;s.x+=(k.has('right')?1:0)*300*dt;s.x=Math.max(30,Math.min(930,s.x));
   if((k.has('action')||k.has('jump'))&&!s.fire){s.bullets.push({x:s.x,y:470});s.fire=true}if(!k.has('action')&&!k.has('jump'))s.fire=false;
