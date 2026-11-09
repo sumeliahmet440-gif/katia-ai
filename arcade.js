@@ -130,7 +130,7 @@ function draw(){
   rect(245,24,250,500,'#0a1420');s.grid.forEach((r,y)=>r.forEach((v,x)=>{if(v){rect(270+x*22,40+y*22,20,20,'#31a98d');rect(272+x*22,42+y*22,16,4,'#a4f2d8');rect(272+x*22,60+y*22,16,2,'#176e67')}}));if(s.piece)s.piece.shape.forEach((r,y)=>r.forEach((v,x)=>{if(v){let px=270+(s.piece.x+x)*22,py=40+(s.piece.y+y)*22;rect(px,py,20,20,'#f3bd4e');rect(px+2,py+2,16,4,'#fff0a3');rect(px+2,py+17,16,2,'#a96b2d')}}));text('TETRIS',620,65,26);text('SATIR '+s.lines,620,105,22)
  }
  if(game==='breakout'){
-  s.bricks.forEach((r,ri)=>r.forEach((b)=>{if(b.on){rect(b.x,b.y,60,20,['#e77d52','#e6b84e','#55b6a2','#6c8de2','#b47bd4'][ri]);rect(b.x+3,b.y+3,54,4,'#ffffff77')}}));rect(s.paddle-60,460,120,13,'#e8e8ff');rect(s.paddle-48,462,96,4,'#9cb8ff');rect(s.x-8,s.y-8,16,16,'#fff');rect(s.x-4,s.y-4,8,8,'#f4d56d');text('SKOR '+score,20,35)
+  s.bricks.forEach((r,ri)=>r.forEach((b)=>{if(b.on){rect(b.x,b.y,60,20,['#e77d52','#e6b84e','#55b6a2','#6c8de2','#b47bd4'][ri]);rect(b.x+3,b.y+3,54,4,'#ffffff77')}}));rect(s.paddle-60,460,120,13,'#e8e8ff');rect(s.paddle-48,462,96,4,'#9cb8ff');rect(s.x-8,s.y-8,16,16,'#fff');rect(s.x-4,s.y-4,8,8,'#f4d56d');text('SKOR '+score+'   CAN '+s.lives,20,35)
  }
  if(game==='pong'){
   rect(20,s.p-50,14,100,'#f7f7f7');rect(926,s.ai-50,14,100,'#f7f7f7');for(let y=0;y<540;y+=28)rect(478,y,4,14,'#71869b');rect(s.x-9,s.y-9,18,18,'#fff');text('SEN '+Math.max(0,s.points)+' · RAKİP '+Math.max(0,-s.points),480,45,24,'#fff','center')
