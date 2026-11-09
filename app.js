@@ -965,7 +965,7 @@ let katiaInstallPrompt=null;
 window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();katiaInstallPrompt=e;});
 window.addEventListener('appinstalled',()=>{katiaInstallPrompt=null;const n=document.querySelector('#katiaInstallState');if(n)n.textContent='✓ Katia bu cihaza yüklendi.';});
 function katiaInstallHtml(){
- const ua=navigator.userAgent||'',ios=/iPhone|iPad|iPod/i.test(ua),android=/Android/i.test(ua),win=/Windows/i.test(ua),linux=/Linux/i.test(ua),opera=/OPR\\//i.test(ua)||/Opera/i.test(ua),standalone=matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
+ const ua=navigator.userAgent||'',ios=/iPhone|iPad|iPod/i.test(ua),android=/Android/i.test(ua),win=/Windows/i.test(ua),linux=/Linux/i.test(ua),opera=/OPR\//i.test(ua)||/Opera/i.test(ua),standalone=matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
  const os=ios?'iPhone / iPad':android?'Android':win?'Windows':linux?'Linux / Pardus':'Bu cihaz';
  const action=standalone?'UYGULAMA ZATEN YÜKLÜ':katiaInstallPrompt?'UYGULAMAYI YÜKLE':opera?'OPERA / OPERA GX KURULUM REHBERİ':ios?'ANA EKRANA EKLE':'KURULUM YÖNERGESİ';
  let guide=standalone?'Katia artık ayrı bir uygulama penceresinde açılıyor.':opera&&android?'Opera veya Opera GX menüsünü aç → “Ana ekrana ekle” seçeneğine dokun. Bu, Katia için ana ekranda tarayıcı üzerinden açılan bir kısayol oluşturur.':opera?'Opera / Opera GX üzerinde Katia’yı kullanabilirsin. Masaüstünde Ctrl + D ile yer imlerine ekle veya sekmeye sağ tıklayıp sekmeyi sabitle. Bu tarayıcılarda ayrı uygulama yükleme seçeneği her sürümde bulunmadığından kurulum düğmesi görünmeyebilir.':ios?'Safari’de Paylaş düğmesine dokun → “Ana Ekrana Ekle” → Ekle. iOS, web uygulamalarını bu şekilde kurar.':android?'Chrome veya desteklenen tarayıcıda “Yükle” ya da menüden “Ana ekrana ekle” seçeneğini kullan.':win?'Edge veya Chrome adres çubuğundaki yükle simgesini seç. Menü → Uygulamaları yükle → Katia AI yolunu da kullanabilirsin.':linux?'Pardus/Linux’ta Chromium veya Chrome menüsünden “Uygulamayı yükle” seçeneğini seç. Firefox’ta destek yoksa siteyi tarayıcıdan kullan.':'Desteklenen bir Chromium tarayıcısında adres çubuğundaki yükle simgesini veya tarayıcı menüsündeki uygulama yükleme seçeneğini kullan.';
@@ -1057,7 +1057,7 @@ $('#setBody').addEventListener('click',async e=>{
   if(katiaInstallPrompt){katiaInstallPrompt.prompt();try{const choice=await katiaInstallPrompt.userChoice;const n=$('#katiaInstallState');if(n)n.textContent=choice.outcome==='accepted'?'Kurulum başlatıldı.':'Kurulum iptal edildi.'}catch(_){ }katiaInstallPrompt=null;return}
   const ua=navigator.userAgent||'';
   if(/iPhone|iPad|iPod/i.test(ua)){toast('Safari → Paylaş → Ana Ekrana Ekle.');}
-  else if(/OPR\\//i.test(ua)||/Opera/i.test(ua)){
+  else if(/OPR\//i.test(ua)||/Opera/i.test(ua)){
    if(/Android/i.test(ua))toast('Opera / Opera GX menüsü → Ana ekrana ekle. Bu bir uygulama kısayoludur.');
    else toast('Opera / Opera GX: Ctrl + D ile Katia’yı yer imlerine ekle veya sekmeye sağ tıklayıp Sabitle. Kurulum istemi desteklenmiyorsa bu yöntemle hızlıca açabilirsin.');
   }
