@@ -18,3 +18,5 @@
 
 #arcPad .arc-side{gap:7px}
 .arc-key{touch-action:none;-webkit-user-select:none;user-select:none}
+
+#chessFrame{display:block;flex:1;width:100%;height:calc(100% - 54px);min-height:0;border:0;background:#101923}#chessFrame[hidden]{display:none}@media(max-width:650px){#chessFrame{height:calc(100% - 46px)}}
