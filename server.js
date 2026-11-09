@@ -200,4 +200,32 @@ app.get('/healthz', (_req, res) => res.send('ok'));
 // Anahtar sunucuda görünüyor mu? (anahtarın kendisi gösterilmez)
 app.get('/api/durum', (_req, res) => { const k = groqKey(); res.json({ groq: !!k, uzunluk: k.length, gsk: k.startsWith('gsk_'), ...core.info() }); });
 
+
+/* Basit çevrim içi satranç odaları: tek Render instance belleğinde tutulur. */
+const chessRooms = new Map();
+const roomCode = () => Math.random().toString(36).slice(2,8).toUpperCase();
+app.post('/api/chess/create', (req,res) => {
+  let code; do { code=roomCode(); } while(chessRooms.has(code));
+  chessRooms.set(code,{fen:'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',history:[],players:1,updated:Date.now()});
+  res.json({room:code});
+});
+app.post('/api/chess/join', (req,res) => {
+  const code=String(req.body.room||'').toUpperCase(), room=chessRooms.get(code);
+  if(!room)return res.status(404).json({error:'Oda bulunamadı veya sunucu yeniden başladı.'});
+  room.players=Math.min(2,room.players+1);res.json({fen:room.fen,players:room.players});
+});
+app.post('/api/chess/state', (req,res) => {
+  const room=chessRooms.get(String(req.body.room||'').toUpperCase());
+  if(!room)return res.status(404).json({error:'Oda bulunamadı.'});
+  res.json({fen:room.fen,players:room.players,history:room.history});
+});
+app.post('/api/chess/move', (req,res) => {
+  const code=String(req.body.room||'').toUpperCase(),room=chessRooms.get(code);
+  if(!room)return res.status(404).json({error:'Oda bulunamadı.'});
+  const fen=String(req.body.fen||'');
+  if(fen.length>200||!/^([rnbqkpRNBQKP1-8/]+) [wb] [KQkq-]+ (-|[a-h][36]) [0-9]+ [0-9]+$/.test(fen))return res.status(400).json({error:'Geçersiz tahta durumu.'});
+  room.fen=fen;room.history=Array.isArray(req.body.history)?req.body.history.slice(-300):[];room.updated=Date.now();
+  res.json({ok:true});
+});
+setInterval(()=>{for(const [k,v] of chessRooms)if(Date.now()-v.updated>6*60*60*1000)chessRooms.delete(k)},30*60*1000).unref();
 app.listen(process.env.PORT || 3000, () => console.log('Katia çalışıyor'));
