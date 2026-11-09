@@ -12,7 +12,8 @@ const games=[
  ['space','▣','Uzay Savaşı','Düşmanları vur ve hayatta kal'],
  ['memory','🧠','Hafıza','Aynı kartları eşleştir'],
  ['2048','🔢','2048','Aynı sayıları birleştir'],
- ['detective','🕵️','Dedektif Kuzenler','Dedektiflik yap, delilleri bul ve davaları çöz'],\n ['chess','♟️','Satranç','Yapay zekâya veya çevrim içi arkadaşına karşı oyna']
+ ['detective','🕵️','Dedektif Kuzenler','Dedektiflik yap, delilleri bul ve davaları çöz'],
+ ['chess','♟️','Satranç','Yapay zekâya veya çevrim içi arkadaşına karşı oyna']
 ];
 const root=document.createElement('section');root.id='arcade';root.innerHTML='<div id="arcTop"><strong>🎮 KATIA ARCADE</strong><span id="arcStatus">11 OYUN</span><button id="arcBack">MENÜ</button><button id="arcClose">KAPAT ✕</button></div><div id="arcMenu"></div><div id="arcStage"><canvas id="arcCanvas" width="960" height="540"></canvas><div id="arcHint"></div><div id="arcPad"><div class="arc-side"><button class="arc-key" data-key="left">◀</button><button class="arc-key" data-key="right">▶</button></div><div class="arc-side"><button class="arc-key" data-key="up">▲</button><button class="arc-key" data-key="down">▼</button><button class="arc-key" data-key="jump">⤒</button><button class="arc-key" data-key="action">●</button></div></div><div id="arcPortrait">📱<br>Oyunu yatay oynamak için telefonu çevir.</div></div>';
 document.body.appendChild(root);
