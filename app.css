@@ -180,3 +180,8 @@ header button svg.ic{width:20px;height:20px}
  aside .box,#wx,#mapbox{width:100%}
  aside{gap:18px}
 }
+
+/* Direct install shortcut: keep the icon reachable on narrow phone headers. */
+#installB{flex:none;display:inline-flex;align-items:center;gap:5px}
+#installB .ic{width:16px;height:16px}
+@media(max-width:760px){#installB{padding:8px 4px}#installB em{display:none}}
