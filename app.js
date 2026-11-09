@@ -878,6 +878,7 @@ const VOPT=()=>{const lg=S.lang.slice(0,2).toLowerCase();const a=voices.filter(v
  return[['','Otomatik'],...a.map(v=>[v.name,`${v.name} (${v.lang})`]),...b.map(v=>[v.name,`${v.name} (${v.lang})`])]};
 const SETS=[
  {id:'api',t:'API ANAHTARLARI',html:()=>apiHtml()},
+ {id:'install',t:'UYGULAMAYI İNDİR',html:()=>katiaInstallHtml()},
  {id:'ai',t:'YAPAY ZEKA',items:[
   {k:'prov',type:'select',l:'Aktif sağlayıcı',o:()=>[['','Otomatik (anahtarı olan ilk)'],...PROV.filter(p=>hasKey(p.id)).map(p=>[p.id,p.n])]},
   {k:'fallback',type:'toggle',l:'Hata / limit olursa sıradaki sağlayıcıya geç'},
@@ -941,6 +942,18 @@ const SETS=[
   {type:'btn',id:'dRst',l:'HER ŞEYİ SIFIRLA'}
  ]}
 ];
+
+/* Katia installable web app: one website, platform-native install flow. */
+let katiaInstallPrompt=null;
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();katiaInstallPrompt=e;});
+window.addEventListener('appinstalled',()=>{katiaInstallPrompt=null;const n=document.querySelector('#katiaInstallState');if(n)n.textContent='✓ Katia bu cihaza yüklendi.';});
+function katiaInstallHtml(){
+ const ua=navigator.userAgent||'',ios=/iPhone|iPad|iPod/i.test(ua),android=/Android/i.test(ua),win=/Windows/i.test(ua),linux=/Linux/i.test(ua),standalone=matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
+ const os=ios?'iPhone / iPad':android?'Android':win?'Windows':linux?'Linux / Pardus':'Bu cihaz';
+ const action=standalone?'UYGULAMA ZATEN YÜKLÜ':katiaInstallPrompt?'UYGULAMAYI YÜKLE':ios?'ANA EKRANA EKLE':'KURULUM YÖNERGESİ';
+ let guide=standalone?'Katia artık ayrı bir uygulama penceresinde açılıyor.':ios?'Safari’de Paylaş düğmesine dokun → “Ana Ekrana Ekle” → Ekle. iOS, web uygulamalarını bu şekilde kurar.':android?'Chrome veya desteklenen tarayıcıda “Yükle” ya da menüden “Ana ekrana ekle” seçeneğini kullan.':win?'Edge veya Chrome adres çubuğundaki yükle simgesini seç. Menü → Uygulamaları yükle → Katia AI yolunu da kullanabilirsin.':linux?'Pardus/Linux’ta Chromium veya Chrome menüsünden “Uygulamayı yükle” seçeneğini seç. Firefox’ta destek yoksa siteyi tarayıcıdan kullan.':'Desteklenen bir Chromium tarayıcısında adres çubuğundaki yükle simgesini veya tarayıcı menüsündeki uygulama yükleme seçeneğini kullan.';
+ return '<section class="note" style="padding:16px;border:1px solid var(--ln);border-radius:14px;margin:10px 0"><b style="font-size:16px">KATIA · '+os+'</b><p style="line-height:1.65;margin:10px 0">Tek bir web uygulaması kurulur. Açıldığında Katia sitesini ayrı uygulama penceresinde açar; ayrı bir APK, EXE veya App Store paketi indirmez.</p><button type="button" data-btn="installNow" style="width:100%;padding:13px;font-weight:800">'+action+'</button><div id="katiaInstallState" class="note" style="margin-top:10px">'+guide+'</div><p class="note" style="margin-top:8px">Güncellemeler site üzerinden gelir. İlk kurulum için HTTPS bağlantısı gerekir.</p></section><div class="note">Destek: Windows 10/11 · Pardus ve diğer Linux dağıtımları (Chromium tabanlı tarayıcılar) · Android · iPhone/iPad (Safari ile Ana Ekrana Ekle) · macOS (uyumlu tarayıcılar).</div>';
+}
 let curTab='api';
 function tabsHtml(){return SETS.map(s=>`<button type="button" data-tab="${s.id}" class="${s.id===curTab?'on':''}">${s.t}</button>`).join('')}
 function ctl(it){
@@ -1021,6 +1034,17 @@ $('#setBody').addEventListener('click',async e=>{
   return}
  if(b.dataset.del){const id=b.dataset.del;delete S.keys[id];if(S.prov===id)S.prov='';save();renderSet();return}
  const id=b.dataset.btn;if(!id)return;
+ if(id==='installNow'){
+  if(matchMedia('(display-mode: standalone)').matches||navigator.standalone===true){toast('Katia zaten uygulama olarak yüklü.');return}
+  if(katiaInstallPrompt){katiaInstallPrompt.prompt();try{const choice=await katiaInstallPrompt.userChoice;const n=$('#katiaInstallState');if(n)n.textContent=choice.outcome==='accepted'?'Kurulum başlatıldı.':'Kurulum iptal edildi.'}catch(_){ }katiaInstallPrompt=null;return}
+  const ua=navigator.userAgent||'';
+  if(/iPhone|iPad|iPod/i.test(ua)){toast('Safari → Paylaş → Ana Ekrana Ekle.');}
+  else if(/Android/i.test(ua)){toast('Tarayıcı menüsü → Uygulamayı yükle / Ana ekrana ekle.');}
+  else if(/Linux/i.test(ua)){toast('Chromium menüsü → Uygulamayı yükle.');}
+  else if(/Windows/i.test(ua)){toast('Chrome/Edge menüsü → Uygulamaları yükle → Katia AI.');}
+  else toast('Tarayıcı menüsünde “Uygulamayı yükle” seçeneğini ara.');
+  return;
+ }
  if(id==='vTest')speak(PM().hello);
  if(id==='micTest'){try{const st=await navigator.mediaDevices.getUserMedia({audio:true});st.getTracks().forEach(t=>t.stop());toast('Mikrofon izni var ✓. Ana ekranda mikrofon düğmesine bas.')}catch(er){toast('Mikrofon izni yok: '+er.name)}closeAll()}
  if(id==='rstC'){delete S.pc[S.persona];apply();renderSet()}
