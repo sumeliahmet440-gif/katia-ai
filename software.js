@@ -4,7 +4,7 @@ const root=document.createElement('section');root.id='katiaSoftware';root.innerH
 <aside id="ksSide"><div id="ksBrand">✳ Yazılım</div><button class="ks-sidebtn" id="ksNew">＋ Yeni çalışma</button><button class="ks-sidebtn" id="ksRecent">◷ Son çalışmalar</button><div id="ksProjects">ÇALIŞMA ALANI</div><div class="ks-sidebtn">Kod üretimi</div><div class="ks-sidebtn">Görsel stüdyosu</div><div class="ks-sidebtn">Video analizi</div><div style="margin-top:auto;color:#89877f;font-size:11px;padding:10px">Katia AI · Yazılım modu</div></aside>
 <main id="ksMain"><header id="ksTop"><strong>Yazılım çalışma alanı</strong><button id="ksBack">← Katia'ya dön</button></header>
 <div id="ksMessages"><div class="ks-welcome" id="ksWelcome"><h1>Bugün ne geliştirelim?</h1><p>Kod yaz, dosyalarını indir, görseller oluştur veya video karelerini analiz et. Sade, iki panelli bir sohbet çalışma alanı.</p></div></div>
-<div id="ksComposerWrap"><div id="ksComposer"><div id="ksMedia"></div><textarea id="ksPrompt" placeholder="Bir web sitesi, uygulama veya kod yaz..."></textarea><div id="ksImagePrompt"><input id="ksImageText" placeholder="Nasıl bir görsel oluşturalım?"><button id="ksMakeImage">Görsel oluştur</button></div><div id="ksActions"><button id="ksAttach">＋ Dosya / video</button><button id="ksImage">▧ Görsel üret</button><button id="ksVoice">🎙 Sesle yaz</button><button id="ksSpeak">🔊 Sonucu seslendir</button><button class="primary" id="ksSend">Gönder ↗</button></div><div id="ksStatus">Kod blokları ayrı dosyalar olarak indirilebilir. Video analizi, seçili modelin görsel desteğine bağlıdır.</div></div></div>
+<div id="ksComposerWrap"><div id="ksComposer"><div id="ksMedia"></div><textarea id="ksPrompt" placeholder="Bir web sitesi, uygulama veya kod yapıştır... (Göndermek için Ctrl + Enter)"></textarea><div id="ksImagePrompt"><input id="ksImageText" placeholder="Nasıl bir görsel oluşturalım?"><button id="ksMakeImage">Görsel oluştur</button></div><div id="ksActions"><button id="ksAttach">＋ Dosya / video</button><button id="ksImage">▧ Görsel üret</button><button id="ksVoice">🎙 Sesle yaz</button><button id="ksSpeak">🔊 Sonucu seslendir</button><button class="primary" id="ksSend">Gönder ↗</button></div><div id="ksStatus">Kod blokları ayrı dosyalar olarak indirilebilir. Video analizi, seçili modelin görsel desteğine bağlıdır.</div></div></div>
 <input id="ksFile" type="file" accept="image/*,video/*" hidden></main>`;
 document.body.appendChild(root);
 let busy=false,attachment=null,lastAnswer='',voice=null,voiceActive=false,codeN=0;
@@ -24,11 +24,36 @@ function renderAnswer(text){
  if(!n&&!rest&&text.trim())d.textContent=text;
  $('#ksMessages').appendChild(d);$('#ksMessages').scrollTop=$('#ksMessages').scrollHeight;
 }
-async function send(){const prompt=$('#ksPrompt').value.trim();if(!prompt&&!attachment)return;if(busy)return;busy=true;$('#ksSend').disabled=true;$('#ksStatus').textContent='Yanıt hazırlanıyor…';if($('#ksWelcome'))$('#ksWelcome').remove();addMessage('user',prompt||'Ekli dosyayı incele.');$('#ksPrompt').value='';
- try{const answer=await window.KatiaApp.askSoftware(prompt||'Ekli dosyayı incele ve açıkla.',attachment&&attachment.data);if(answer){renderAnswer(answer);$('#ksStatus').textContent='Yanıt hazır. Kod bloklarını ayrı dosyalar olarak indirebilirsin.'}else $('#ksStatus').textContent='Yanıt alınamadı. Model anahtarını ve bağlantıyı kontrol et.'}
- catch(e){addMessage('assistant','Hata: '+e.message);$('#ksStatus').textContent='İşlem tamamlanamadı.'}
- attachment=null;$('#ksMedia').innerHTML='';busy=false;$('#ksSend').disabled=false}
-$('#ksSend').onclick=send;$('#ksPrompt').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send()}});
+async function send(){
+ const prompt=$('#ksPrompt').value;
+ const clean=prompt.trim();
+ if(!clean&&!attachment)return;
+ if(busy)return;
+ if(!window.KatiaApp||typeof window.KatiaApp.askSoftware!=='function'){
+  $('#ksStatus').textContent='Yazılım motoru hazır değil. Sayfayı yenileyip tekrar dene.';return;
+ }
+ busy=true;$('#ksSend').disabled=true;$('#ksStatus').textContent='Kod / mesaj gönderiliyor…';
+ if($('#ksWelcome'))$('#ksWelcome').remove();
+ addMessage('user',clean||'Ekli dosyayı incele.');
+ try{
+  if(window.KatiaApp.setSoftwareMode)window.KatiaApp.setSoftwareMode();
+  const answer=await window.KatiaApp.askSoftware(clean||'Ekli dosyayı incele ve açıkla.',attachment&&attachment.data);
+  if(answer){
+   $('#ksPrompt').value='';
+   renderAnswer(answer);
+   $('#ksStatus').textContent='Yanıt hazır. Kod bloklarını ayrı dosyalar olarak indirebilirsin.';
+   attachment=null;$('#ksMedia').innerHTML='';
+  }else{
+   $('#ksStatus').textContent='Yanıt gelmedi. Kodun kutuda duruyor; API anahtarı, model ve bağlantıyı kontrol edip tekrar Gönder.';
+   addMessage('assistant','Yanıt alınamadı. Girdiğin kod silinmedi; tekrar gönderebilirsin.');
+  }
+ }catch(e){
+  addMessage('assistant','Hata: '+(e&&e.message||String(e)));
+  $('#ksStatus').textContent='Gönderim başarısız. Kod kutuda korundu; düzeltip tekrar deneyebilirsin.';
+ }
+ busy=false;$('#ksSend').disabled=false;
+}
+$('#ksSend').onclick=send;$('#ksPrompt').addEventListener('keydown',e=>{if(e.key==='Enter'&&(e.ctrlKey||e.metaKey)){e.preventDefault();send()}});
 $('#ksBack').onclick=close;$('#ksNew').onclick=()=>{$('#ksMessages').innerHTML='<div class="ks-welcome" id="ksWelcome"><h1>Yeni bir şeye başlayalım.</h1><p>Ne geliştirmek istersin?</p></div>';lastAnswer='';$('#ksPrompt').focus()};
 $('#ksRecent').onclick=()=>{$('#ksStatus').textContent='Bu oturumdaki konuşmalar ekranda tutulur; kalıcı bulut proje geçmişi henüz bağlı değil.'};
 $('#ksAttach').onclick=()=>$('#ksFile').click();
