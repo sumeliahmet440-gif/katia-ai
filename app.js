@@ -1031,7 +1031,18 @@ function renderSet(){
  $('#setBody').innerHTML=(s.note?`<div class="note">${s.note}</div>`:'')+lockNote+(s.html?s.html():s.items.map(ctl).join(''));
  openIds.forEach(id=>{const e=$(`#setBody [data-pk="${id}"]`);if(e)e.closest('details').open=true});
 }
-function openSet(tab){if(tab)curTab=tab;renderSet();closeAll();$('#mSet').classList.add('on');$('#mSet').setAttribute('aria-label',curTab==='install'?'Uygulamayı indirme ekranı':'Ayarlar')}
+function openSet(tab){
+ if(tab)curTab=tab;
+ const modal=$('#mSet'),body=$('#setBody');
+ closeAll();
+ modal.classList.add('on');
+ modal.setAttribute('aria-label',curTab==='install'?'Uygulamayı indirme ekranı':'Ayarlar');
+ try{renderSet();}
+ catch(err){
+  console.error('Ayarlar ekranı açılamadı:',err);
+  body.innerHTML='<div class="note bad">Ayarlar yüklenirken bir hata oluştu. Sayfayı yenileyip tekrar dene.</div>';
+ }
+}
 $('#setB').onclick=()=>openSet();
 $('#installB').onclick=()=>openSet('install');
 $('#tabs').onclick=e=>{const b=e.target.closest('[data-tab]');if(b){curTab=b.dataset.tab;renderSet();$('#setBody').scrollTop=0}};
