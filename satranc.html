@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#101b22"><title>Katia Satranç</title><link rel="stylesheet" href="/satranc.css?v=20261111-8"><script defer src="/chess-engine.js?v=20261110-1"></script></head>
+<html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#101b22"><title>Katia Satranç</title><link rel="stylesheet" href="/satranc.css?v=20261111-10"><script defer src="/chess-engine.js?v=20261110-1"></script></head>
 <body><main class="wrap">
 <header class="topbar"><button id="back" class="back">← Oyunlara dön</button><div class="brand"><span class="brand-mark">♟</span><div><h1>Katia Satranç</h1><small>Bir hamle daha, başarabilirsin!</small></div></div><span id="status" class="status">Beyaz oynar</span></header>
 <nav class="mode-tabs"><button data-mode="ai" class="active">🤖 Katia ile oyna</button><button data-mode="local">👥 Yan yana</button><button data-mode="online">🌐 Çevrim içi</button><button data-mode="learn">🎓 Satranç Akademisi</button></nav>
@@ -7,6 +7,14 @@
 <div class="board-column">
 <div class="opponent"><div class="mini-mascot" aria-hidden="true"><span class="mascot-hair"></span><span class="mascot-face"><i></i><i></i><b></b></span><span class="mascot-body"></span></div><div class="opponent-info"><strong>Katia</strong><small id="opponentLine">Bugün güzel bir maç yapalım mı?</small></div><span class="thinking-dot" id="thinkingDot" hidden>● ● ●</span></div>
 <div class="board-shell"><div class="board-coords left"><span>8</span><span>7</span><span>6</span><span>5</span><span>4</span><span>3</span><span>2</span><span>1</span></div><div id="board" aria-label="Satranç tahtası"></div><div class="board-coords bottom"><span>a</span><span>b</span><span>c</span><span>d</span><span>e</span><span>f</span><span>g</span><span>h</span></div></div>
+<section id="cheatPanel" class="cheat-panel" hidden>
+<div class="cheat-title">🕹️ Gizli hile menüsü <span>Yalnızca çevrim dışı modlarda</span></div>
+<div class="cheat-controls">
+<label>Taşın bulunduğu kare <select id="cheatFrom"></select></label><label>Yeni kare <select id="cheatTo"></select></label><button id="cheatMove">Taşı serbestçe oynat</button>
+<label>Taşın rengi <select id="cheatColor"><option value="w">Beyaz</option><option value="b">Siyah</option></select></label>
+<label>Dönüştürülecek taş <select id="cheatPiece"><option value="q">Vezir</option><option value="r">Kale</option><option value="b">Fil</option><option value="n">At</option><option value="p">Piyon</option><option value="k">Şah</option></select></label>
+<label>Dönüştürülecek kare <select id="cheatTransformSquare"></select></label><button id="cheatTransform">Taşı dönüştür</button>
+</div><p id="cheatMessage" aria-live="polite">Gizli menü açıldı.</p></section>
 <div class="board-actions"><button id="undo">↶ Geri al</button><button id="flip">⇅ Tahtayı çevir</button><button id="new" class="new-game">Yeni oyun</button></div>
 </div>
 <aside class="side-panel">
@@ -29,4 +37,4 @@
       <div class="academy-footer"><span id="academyReward">⭐ +10 XP</span><button id="academyContinue" disabled>Kontrol et</button></div>
     </article>
   </div>
-</section></main><script defer src="/satranc.js?v=20261111-9"></script></body></html>
+</section></main><script defer src="/satranc.js?v=20261111-10"></script></body></html>
