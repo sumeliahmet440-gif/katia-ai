@@ -3,7 +3,7 @@ const $=s=>document.querySelector(s),need=['#board','#status','#moves','#level',
 const missing=need.filter(s=>!$(s));if(missing.length){console.error('Katia Chess missing UI',missing);return}
 const ChessCtor=window.Chess;if(typeof ChessCtor!=='function'){$('#status').textContent='Satranç motoru yüklenemedi. Sayfayı yenile.';return}
 const game=new ChessCtor(),board=$('#board'),status=$('#status'),moves=$('#moves');
-let selected=null,legal=[],flipped=false,mode='ai',human='w',room='',poll=null,busy=false,onlineSeat='w',speechOn=true,lastLine='',voiceList=[];
+let selected=null,legal=[],flipped=false,mode='ai',human='w',room='',poll=null,busy=false,onlineSeat='w',speechOn=true,lastLine='',voiceList=[],activeAudio=null,speechToken=0;
 const glyph={wk:'♔',wq:'♕',wr:'♖',wb:'♗',wn:'♘',wp:'♙',bk:'♚',bq:'♛',br:'♜',bb:'♝',bn:'♞',bp:'♟'};
 const lines={
 hello:['Selam! Ben Katia. Bugün şah mat mı yapıyoruz, dostça mı kapışıyoruz?','Tahtaya hoş geldin! Ben hazırım, peki ya sen?','Hadi bakalım! Her hamlede biraz daha güçleneceksin.'],
@@ -22,7 +22,24 @@ coach:['Benim planım hazır… peki seninki?','O hamle biraz cesurdu, hoşuma g
 const pick=a=>a[Math.floor(Math.random()*a.length)];
 function loadVoices(){if(!('speechSynthesis'in window))return;voiceList=speechSynthesis.getVoices().filter(v=>/^tr[-_]/i.test(v.lang));const sel=$('#voiceChoice');if(!sel)return;const chosen=sel.value;sel.innerHTML='<option value="auto">En doğal Türkçe ses (otomatik)</option>';voiceList.forEach((v,i)=>{const o=document.createElement('option');o.value=String(i);o.textContent=v.name+(v.localService?'':' · çevrim içi');sel.append(o)});if([...sel.options].some(o=>o.value===chosen))sel.value=chosen}
 function bestVoice(){const choice=$('#voiceChoice')?.value;if(choice&&choice!=='auto'&&voiceList[Number(choice)])return voiceList[Number(choice)];return voiceList.find(v=>/natural|online/i.test(v.name)&&/emel|female|yelda|filiz|selin/i.test(v.name))||voiceList.find(v=>/natural|online/i.test(v.name))||voiceList.find(v=>/emel|female|woman|yelda|filiz|selin/i.test(v.name))||voiceList[0]||null}
-function speak(line){lastLine=line;$('#coachText').textContent=line;if(!speechOn||!('speechSynthesis'in window))return;try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(line);u.lang='tr-TR';u.rate=.88;u.pitch=1.04;u.volume=1;const v=bestVoice();if(v){u.voice=v;u.lang=v.lang}speechSynthesis.speak(u)}catch(e){console.warn('Seslendirme kullanılamıyor',e)}}
+function speak(line){
+lastLine=line;$('#coachText').textContent=line;
+const token=++speechToken;
+if(activeAudio){activeAudio.pause();activeAudio.src='';activeAudio=null}
+if('speechSynthesis'in window)speechSynthesis.cancel();
+if(!speechOn)return;
+$('#voiceStatus').textContent='Katia konuşuyor…';
+fetch('/api/chess/voice',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:line})})
+.then(async r=>{if(!r.ok)throw Error('Natural TTS unavailable');return r.blob()})
+.then(blob=>{if(token!==speechToken||!speechOn)return;const url=URL.createObjectURL(blob);const audio=new Audio(url);activeAudio=audio;audio.onended=()=>{URL.revokeObjectURL(url);if(activeAudio===audio)activeAudio=null;};audio.onerror=()=>{URL.revokeObjectURL(url);if(activeAudio===audio)activeAudio=null;fallbackSpeak(line,token)};$('#voiceStatus').textContent='Doğal Katia sesi aktif';return audio.play()})
+.catch(()=>{if(token===speechToken)fallbackSpeak(line,token)});
+}
+function fallbackSpeak(line,token){
+if(token!==speechToken||!speechOn)return;
+$('#voiceStatus').textContent='Cihazın Türkçe sesi kullanılıyor';
+if(!('speechSynthesis'in window))return;
+try{const u=new SpeechSynthesisUtterance(line);u.lang='tr-TR';u.rate=.9;u.pitch=1.06;u.volume=1;const v=bestVoice();if(v){u.voice=v;u.lang=v.lang}speechSynthesis.speak(u)}catch(e){console.warn('Seslendirme kullanılamıyor',e)}
+}
 function sound(kind){try{const AC=window.AudioContext||window.webkitAudioContext;if(!AC)return;const ac=new AC();const seq=kind==='win'?[523,659,784,1047]:kind==='lose'?[392,330,262]:kind==='capture'?[740,520]:kind==='check'?[660,880]:kind==='click'?[480]:[520,620];let t=ac.currentTime;seq.forEach((f,i)=>{const o=ac.createOscillator(),g=ac.createGain();o.type='sine';o.frequency.value=f;g.gain.setValueAtTime(.0001,t+i*.105);g.gain.exponentialRampToValueAtTime(kind==='click'?.045:.07,t+i*.105+.018);g.gain.exponentialRampToValueAtTime(.0001,t+i*.105+.17);o.connect(g);g.connect(ac.destination);o.start(t+i*.105);o.stop(t+i*.105+.18)});setTimeout(()=>ac.close(),1000)}catch(e){}}
 function render(){board.replaceChildren();const files=flipped?'hgfedcba':'abcdefgh',ranks=flipped?'12345678':'87654321';for(let ri=0;ri<8;ri++)for(let fi=0;fi<8;fi++){const sq=files[fi]+ranks[ri],p=game.get(sq),b=document.createElement('button');b.type='button';b.className='sq '+((fi+ri)%2?'dark':'light');b.textContent=p?glyph[p.color+p.type]:'';if(p)b.classList.add(p.color==='w'?'piece-white':'piece-black');b.dataset.sq=sq;b.setAttribute('aria-label',sq+(p?' '+(p.color==='w'?'beyaz ':'siyah ')+p.type:''));if(selected===sq)b.classList.add('sel');const target=legal.find(m=>m.to===sq);if(target)b.classList.add(target.flags.includes('c')||target.flags.includes('e')?'capture':'target');b.addEventListener('click',()=>tap(sq));board.append(b)}
 moves.replaceChildren();const hist=game.history();for(let i=0;i<hist.length;i+=2){const li=document.createElement('li');li.textContent=(i/2+1)+'. '+hist[i]+(hist[i+1]?' · '+hist[i+1]:'');moves.append(li)}
@@ -48,7 +65,7 @@ $('#flip').addEventListener('click',()=>{flipped=!flipped;render();sound('click'
 $('#back').addEventListener('click',()=>{if(window.parent!==window)window.parent.postMessage({type:'katia-chess-exit'},location.origin);else location.href='/'});
 $('#create').addEventListener('click',async()=>{try{const x=await api('create');room=x.room;onlineSeat='w';$('#roomInfo').textContent='Oda kodun: '+room+' · Arkadaşına gönder';if(poll)clearInterval(poll);poll=setInterval(sync,1200)}catch(e){$('#roomInfo').textContent=e.message}});
 $('#join').addEventListener('click',async()=>{try{room=$('#room').value.trim().toUpperCase();if(!room)throw Error('Önce oda kodunu yaz.');const x=await api('join',{room});onlineSeat='b';if(!game.load(x.fen))throw Error('Oda tahtası okunamadı.');selected=null;legal=[];render();$('#roomInfo').textContent='Odaya bağlandın: '+room;if(poll)clearInterval(poll);poll=setInterval(sync,1200)}catch(e){$('#roomInfo').textContent=e.message}});
-$('#voiceChoice').addEventListener('change',()=>speak(lastLine||pick(lines.hello)));if('speechSynthesis'in window){loadVoices();speechSynthesis.addEventListener('voiceschanged',loadVoices)}$('#speakToggle').addEventListener('click',()=>{speechOn=!speechOn;$('#speakToggle').textContent=speechOn?'🔊':'🔇';if(!speechOn&&'speechSynthesis'in window)speechSynthesis.cancel();else speak(lastLine||pick(lines.hello))});
+$('#voiceChoice').addEventListener('change',()=>speak(lastLine||pick(lines.hello)));if('speechSynthesis'in window){loadVoices();speechSynthesis.addEventListener('voiceschanged',loadVoices)}$('#speakToggle').addEventListener('click',()=>{speechOn=!speechOn;$('#speakToggle').textContent=speechOn?'🔊':'🔇';if(!speechOn){speechToken++;if(activeAudio){activeAudio.pause();activeAudio=null}if('speechSynthesis'in window)speechSynthesis.cancel();$('#voiceStatus').textContent='Ses kapalı'}else speak(lastLine||pick(lines.hello))});
 $('#sayAgain').addEventListener('click',()=>speak(lastLine||pick(lines.hello)));
 render();speak(pick(lines.hello));window.addEventListener('error',e=>{if(e.filename&&/satranc|chess-engine/.test(e.filename))status.textContent='Satranç hatası: '+e.message});
 })();
