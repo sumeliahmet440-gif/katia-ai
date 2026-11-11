@@ -1,120 +1,51 @@
 (()=>{'use strict';
-const $=s=>document.querySelector(s);
-const required=['#board','#status','#moves','#level','#color','#new','#undo','#flip','#back','#online','#room','#roomInfo','#create','#join'];
-const missing=required.filter(s=>!$(s));
-if(missing.length){console.error('Satranç arayüzü eksik:',missing);const el=$('#status');if(el)el.textContent='Satranç arayüzü yüklenemedi: '+missing.join(', ');return;}
-const ChessCtor=window.Chess;
-if(typeof ChessCtor!=='function'){$('#status').textContent='Satranç motoru yüklenemedi. Sayfayı yenile.';return;}
+const $=s=>document.querySelector(s),need=['#board','#status','#moves','#level','#color','#new','#undo','#flip','#back','#online','#room','#roomInfo','#create','#join','#coachText','#opponentLine','#thinkingDot','#speakToggle','#sayAgain'];
+const missing=need.filter(s=>!$(s));if(missing.length){console.error('Katia Chess missing UI',missing);return}
+const ChessCtor=window.Chess;if(typeof ChessCtor!=='function'){$('#status').textContent='Satranç motoru yüklenemedi. Sayfayı yenile.';return}
 const game=new ChessCtor(),board=$('#board'),status=$('#status'),moves=$('#moves');
-let selected=null,legal=[],flipped=false,mode='ai',human='w',room='',poll=null,busy=false,onlineSeat='w';
+let selected=null,legal=[],flipped=false,mode='ai',human='w',room='',poll=null,busy=false,onlineSeat='w',speechOn=true,lastLine='';
 const glyph={wk:'♔',wq:'♕',wr:'♖',wb:'♗',wn:'♘',wp:'♙',bk:'♚',bq:'♛',br:'♜',bb:'♝',bn:'♞',bp:'♟'};
-function render(){
- board.replaceChildren();
- const files=flipped?'hgfedcba':'abcdefgh',ranks=flipped?'12345678':'87654321';
- for(const rank of ranks)for(const file of files){
-  const sq=file+rank,p=game.get(sq),b=document.createElement('button');
-  b.type='button';b.className='sq '+((files.indexOf(file)+ranks.indexOf(rank))%2?'dark':'light');
-  b.textContent=p?glyph[p.color+p.type]:'';b.dataset.sq=sq;b.setAttribute('aria-label',sq+(p?' '+(p.color==='w'?'beyaz ':'siyah ')+p.type:''));
-  if(selected===sq)b.classList.add('sel');
-  const target=legal.find(m=>m.to===sq);if(target)b.classList.add(target.flags.includes('c')||target.flags.includes('e')?'capture':'target');
-  b.addEventListener('click',()=>tap(sq));board.append(b);
- }
- moves.replaceChildren();
- const history=game.history();
- for(let i=0;i<history.length;i+=2){
-  const li=document.createElement('li');li.textContent=(Math.floor(i/2)+1)+'. '+history[i]+(history[i+1]?'   '+history[i+1]:'');moves.append(li);
- }
- const turn=game.turn()==='w'?'Beyaz':'Siyah';
- status.textContent=game.game_over()?(game.in_checkmate()?'Şah mat! '+(game.turn()==='w'?'Siyah':'Beyaz')+' kazandı.':'Berabere.'):(turn+' oynar'+(game.in_check()?' · ŞAH':''));
-}
-function tap(sq){
- if(busy||game.game_over()||(mode==='online'&&game.turn()!==onlineSeat))return;
- const p=game.get(sq);
- if(selected&&legal.some(m=>m.to===sq)){
-  const choices=legal.filter(m=>m.to===sq);let promo='q';
-  if(choices.length>1){const answer=window.prompt('Terfi seç: q=Vezir, r=Kale, b=Fil, n=At','q');if(answer===null)return;promo=answer.trim().toLowerCase();if(!['q','r','b','n'].includes(promo)){status.textContent='Terfi için q, r, b veya n yaz.';return;}}
-  const result=game.move({from:selected,to:sq,promotion:promo});
-  if(!result){selected=null;legal=[];render();return;}
-  selected=null;legal=[];render();afterMove();return;
- }
- if(p&&p.color===game.turn()&&(mode!=='ai'||p.color===human)){
-  selected=sq;legal=game.moves({square:sq,verbose:true});render();
- }else{selected=null;legal=[];render();}
-}
+const lines={
+hello:['Selam! Ben Katia. Bugün şah mat mı yapıyoruz, dostça mı kapışıyoruz?','Tahtaya hoş geldin! Ben hazırım, peki ya sen?','Hadi bakalım! Her hamlede biraz daha güçleneceksin.'],
+think:['Hmm… Bu hamleyi biraz düşünmem gerek.','Bir saniye, en tatlı hamlemi seçiyorum!','Taşlarımı sayıyorum… Strateji zamanı!'],
+good:['Güzel hamle! Bunu beklemiyordum. 👀','Vay canına, tahtayı iyi okuyorsun!','İşte buna akıllıca hamle derim!','Harika! Böyle devam edersen işim zor.','Ooo, güzel bir taktik yakaladın!'],
+capture:['Bir taşımı aldın! Tamam, rövanş istiyorum.','Hop! Taşım gitti. Dikkatli oynuyorsun!','Güzel yakaladın, ama maç daha bitmedi!'],
+check:['Şah mı? Ooo, beni köşeye sıkıştırdın!','Şah çekiyorsun ha? Güzel cesaret!','Dikkat dikkat, şah tehdidi var!'],
+mistake:['Bu kare biraz tehlikeli olabilir, bir daha düşünmek ister misin?','Satrançta acele yok. Bazen en iyi hamle beklemektir.','Küçük bir ipucu: rakibinin tehditlerine de bak!'],
+win:['Yaşasın! Kazandın! Sana kocaman bir alkış! 🎉','Muhteşem oynadın! Bu zaferi hak ettin!','Şah mat! Bugün tahtanın yıldızı sensin! ⭐'],
+lose:['Bu tur benim oldu! Ama rövanşta beni yenebilirsin.','Güzel maçtı! Bir sonraki oyunda intikamını alırsın.','Kazandım diye havalara girmeyeyim… Tekrar oynayalım mı?'],
+draw:['Berabere! İkimiz de pes etmedik.','Ne çekişmeli maçtı! Bu sonuç ikimize de yakıştı.'],
+newgame:['Yeni maç, yeni şans! Bu kez hangi taktikle geleceksin?','Taşlar hazır, ben hazırım. Başlayalım!'],
+promotion:['Vezir terfisi mi? Tahtaya güçlü bir oyuncu geliyor!','Terfi zamanı! Bu hamle maçın kaderini değiştirebilir.']
+};
+const pick=a=>a[Math.floor(Math.random()*a.length)];
+function speak(line){lastLine=line;$('#coachText').textContent=line;if(!speechOn||!('speechSynthesis'in window))return;try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(line);u.lang='tr-TR';u.rate=.94;u.pitch=1.12;u.volume=.9;const vs=speechSynthesis.getVoices();const v=vs.find(x=>/^tr[-_]/i.test(x.lang)&&/female|woman|filiz|yelda|selin/i.test(x.name))||vs.find(x=>/^tr[-_]/i.test(x.lang));if(v)u.voice=v;speechSynthesis.speak(u)}catch(e){console.warn('Seslendirme kullanılamıyor',e)}}
+function sound(kind){try{const AC=window.AudioContext||window.webkitAudioContext;if(!AC)return;const ac=new AC();const seq=kind==='win'?[523,659,784,1047]:kind==='lose'?[392,330,262]:kind==='capture'?[740,520]:kind==='check'?[660,880]:kind==='click'?[480]:[520,620];let t=ac.currentTime;seq.forEach((f,i)=>{const o=ac.createOscillator(),g=ac.createGain();o.type='sine';o.frequency.value=f;g.gain.setValueAtTime(.0001,t+i*.105);g.gain.exponentialRampToValueAtTime(kind==='click'?.045:.07,t+i*.105+.018);g.gain.exponentialRampToValueAtTime(.0001,t+i*.105+.17);o.connect(g);g.connect(ac.destination);o.start(t+i*.105);o.stop(t+i*.105+.18)});setTimeout(()=>ac.close(),1000)}catch(e){}}
+function render(){board.replaceChildren();const files=flipped?'hgfedcba':'abcdefgh',ranks=flipped?'12345678':'87654321';for(let ri=0;ri<8;ri++)for(let fi=0;fi<8;fi++){const sq=files[fi]+ranks[ri],p=game.get(sq),b=document.createElement('button');b.type='button';b.className='sq '+((fi+ri)%2?'dark':'light');b.textContent=p?glyph[p.color+p.type]:'';b.dataset.sq=sq;b.setAttribute('aria-label',sq+(p?' '+(p.color==='w'?'beyaz ':'siyah ')+p.type:''));if(selected===sq)b.classList.add('sel');const target=legal.find(m=>m.to===sq);if(target)b.classList.add(target.flags.includes('c')||target.flags.includes('e')?'capture':'target');b.addEventListener('click',()=>tap(sq));board.append(b)}
+moves.replaceChildren();const hist=game.history();for(let i=0;i<hist.length;i+=2){const li=document.createElement('li');li.textContent=(i/2+1)+'. '+hist[i]+(hist[i+1]?' · '+hist[i+1]:'');moves.append(li)}
+const turn=game.turn()==='w'?'Beyaz':'Siyah';status.textContent=game.game_over()?(game.in_checkmate()?'Şah mat! '+(game.turn()==='w'?'Siyah':'Beyaz')+' kazandı.':'Berabere.'):(turn+' oynar'+(game.in_check()?' · ŞAH':''))}
 const values={p:100,n:320,b:330,r:500,q:900,k:20000};
-function evaluate(g,perspective){
- if(g.in_checkmate())return g.turn()===perspective?-100000:100000;
- if(g.game_over())return 0;
- let score=0;
- for(const f of 'abcdefgh')for(let r=1;r<=8;r++){const p=g.get(f+r);if(p){const sign=p.color===perspective?1:-1;score+=sign*values[p.type];if(p.type==='p')score+=sign*(p.color==='w'?r-2:7-r)*5;}}
- return score;
-}
-function search(g,depth,alpha,beta,perspective){
- if(depth===0||g.game_over())return evaluate(g,perspective);
- const ms=g.moves({verbose:true}),maximizing=g.turn()===perspective;
- let best=maximizing?-Infinity:Infinity;
- for(const m of ms){
-  g.move(m);const score=search(g,depth-1,alpha,beta,perspective);g.undo();
-  if(maximizing){best=Math.max(best,score);alpha=Math.max(alpha,best);}else{best=Math.min(best,score);beta=Math.min(beta,best);}
-  if(beta<=alpha)break;
- }
- return best;
-}
-function choose(ms,depth){
- const aiColor=game.turn();let best=null,bestScore=-Infinity,alpha=-Infinity;
- for(const m of ms){game.move(m);const score=search(game,Math.max(0,depth-1),alpha,Infinity,aiColor);game.undo();const tie=score+Math.random()*0.01;if(tie>bestScore){bestScore=tie;best=m;}alpha=Math.max(alpha,score);}
- return best;
-}
-function reset(){
- if(poll){clearInterval(poll);poll=null;}selected=null;legal=[];busy=false;game.reset();render();
- if(mode==='ai'&&human==='b')afterMove();
-}
-function api(path,data){
- return fetch('/api/chess/'+path,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data||{})}).then(async r=>{const j=await r.json().catch(()=>({}));if(!r.ok)throw Error(j.error||'Sunucu bağlantı hatası');return j;});
-}
-async function sendMove(){try{await api('move',{room,fen:game.fen(),history:game.history()});}catch(e){$('#roomInfo').textContent=e.message;}}
-async function sync(){
- if(!room||mode!=='online')return;
- try{const j=await api('state',{room});if(j.fen&&j.fen!==game.fen()){if(game.load(j.fen)){selected=null;legal=[];render();}}
-  $('#roomInfo').textContent='Oda: '+room+' · '+(j.players||0)+' oyuncu';
- }catch(e){$('#roomInfo').textContent=e.message;if(poll){clearInterval(poll);poll=null;}}
-}
-function afterMove(){
- if(mode==='online'){sendMove();return;}
- if(mode==='ai'&&game.turn()!==human&&!game.game_over()){
-  busy=true;status.textContent='Katia düşünüyor…';
-  window.setTimeout(()=>{
-   try{const ms=game.moves({verbose:true});if(ms.length){const depth=Math.max(1,Math.min(3,Number($('#level').value)||2));const m=choose(ms,depth);if(m)game.move(m);}}
-   catch(e){console.error('AI hamle hatası:',e);status.textContent='Yapay zekâ hamle yapamadı.';}
-   busy=false;render();
-  },180);
- }
-}
-function setMode(next){
- mode=next;document.querySelectorAll('[data-mode]').forEach(b=>b.classList.toggle('active',b.dataset.mode===next));
- $('#online').hidden=next!=='online';$('#color').disabled=next==='online';room='';
- if(poll){clearInterval(poll);poll=null;}reset();
- if(next==='online')$('#roomInfo').textContent='Oda oluştur veya kod gir.';
-}
+function evaluate(g,perspective){if(g.in_checkmate())return g.turn()===perspective?-100000:100000;if(g.game_over())return 0;let score=0;for(const f of 'abcdefgh')for(let r=1;r<=8;r++){const p=g.get(f+r);if(p){const sign=p.color===perspective?1:-1;score+=sign*values[p.type];if(p.type==='p')score+=sign*(p.color==='w'?r-2:7-r)*5}}return score}
+function search(g,d,a,b,p){if(d===0||g.game_over())return evaluate(g,p);const ms=g.moves({verbose:true}),max=g.turn()===p;let best=max?-Infinity:Infinity;for(const m of ms){g.move(m);const v=search(g,d-1,a,b,p);g.undo();if(max){best=Math.max(best,v);a=Math.max(a,best)}else{best=Math.min(best,v);b=Math.min(b,best)}if(b<=a)break}return best}
+function choose(ms,d){const p=game.turn();let best=null,bv=-Infinity,a=-Infinity;for(const m of ms){game.move(m);const v=search(game,d-1,a,Infinity,p);game.undo();if(v+Math.random()*.01>bv){bv=v;best=m}a=Math.max(a,v)}return best}
+function finishTalk(){if(game.in_checkmate()){const humanWon=game.turn()!==human;sound(humanWon?'win':'lose');speak(pick(humanWon?lines.win:lines.lose))}else if(game.in_check()) {sound('check');speak(pick(lines.check))}else if(game.game_over()){sound('lose');speak(pick(lines.draw))}}
+function tap(sq){if(busy||game.game_over()||(mode==='online'&&game.turn()!==onlineSeat))return;const p=game.get(sq);if(selected&&legal.some(m=>m.to===sq)){const opts=legal.filter(m=>m.to===sq);let promo='q';if(opts.length>1){const a=prompt('Terfi seç: q=Vezir, r=Kale, b=Fil, n=At','q');if(a===null)return;promo=a.trim().toLowerCase();if(!['q','r','b','n'].includes(promo))return speak('Terfi için q, r, b veya n seçmelisin.')}const moving=game.get(selected),wasCapture=!!game.get(sq)||opts.some(m=>m.flags.includes('e'));const res=game.move({from:selected,to:sq,promotion:promo});if(!res)return;selected=null;legal=[];render();sound(wasCapture?'capture':'move');if(res.promotion)speak(pick(lines.promotion));if(mode==='online')sendMove();else afterMove();if(!game.game_over()&&game.in_check())finishTalk();return}
+if(p&&p.color===game.turn()&&(mode!=='ai'||p.color===human)){selected=sq;legal=game.moves({square:sq,verbose:true});sound('click');render()}else{selected=null;legal=[];render()}}
+function reset(){if(poll){clearInterval(poll);poll=null}selected=null;legal=[];busy=false;game.reset();render();if(mode==='ai'&&human==='b')afterMove();else speak(pick(lines.newgame))}
+function api(path,data){return fetch('/api/chess/'+path,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data||{})}).then(async r=>{const x=await r.json().catch(()=>({}));if(!r.ok)throw Error(x.error||'Sunucu bağlantı hatası');return x})}
+async function sendMove(){try{await api('move',{room,fen:game.fen(),history:game.history()})}catch(e){$('#roomInfo').textContent=e.message}}
+async function sync(){if(!room||mode!=='online')return;try{const x=await api('state',{room});if(x.fen&&x.fen!==game.fen()&&game.load(x.fen)){selected=null;legal=[];render();sound('move')}$('#roomInfo').textContent='Oda: '+room+' · '+(x.players||0)+' oyuncu'}catch(e){$('#roomInfo').textContent=e.message;if(poll){clearInterval(poll);poll=null}}}
+function afterMove(){finishTalk();if(mode==='online'){sendMove();return}if(mode==='ai'&&game.turn()!==human&&!game.game_over()){busy=true;$('#thinkingDot').hidden=false;$('#opponentLine').textContent='Katia düşünüyor…';speak(pick(lines.think));setTimeout(()=>{try{const ms=game.moves({verbose:true});if(ms.length){const depth=Math.max(1,Math.min(3,Number($('#level').value)||2)),m=choose(ms,depth);if(m){game.move(m);sound('move')}}}catch(e){console.error(e)}busy=false;$('#thinkingDot').hidden=true;render();if(game.game_over())finishTalk();else if(game.in_check())finishTalk();else speak(pick(Math.random()<.45?lines.good:lines.think));$('#opponentLine').textContent='Seninle oynamak çok eğlenceli!'},180)}}
+function setMode(next){mode=next;document.querySelectorAll('[data-mode]').forEach(b=>b.classList.toggle('active',b.dataset.mode===next));$('#online').hidden=next!=='online';$('#color').disabled=next==='online';room='';if(poll){clearInterval(poll);poll=null}reset();if(next==='online')$('#roomInfo').textContent='Oda oluştur veya kod gir.'}
 document.querySelectorAll('[data-mode]').forEach(b=>b.addEventListener('click',()=>setMode(b.dataset.mode)));
-$('#color').addEventListener('change',e=>{human=e.target.value;flipped=human==='b';reset();});
-$('#new').addEventListener('click',reset);
-$('#undo').addEventListener('click',()=>{
- if(busy)return;
- let count=mode==='ai'&&game.history().length>1?2:1;
- while(count--&&game.undo()){}
- selected=null;legal=[];render();
-});
-$('#flip').addEventListener('click',()=>{flipped=!flipped;render();});
-$('#back').addEventListener('click',()=>{if(window.parent!==window)window.parent.postMessage({type:'katia-chess-exit'},location.origin);else location.href='/';});
-$('#create').addEventListener('click',async()=>{
- try{const j=await api('create');room=j.room;onlineSeat='w';$('#roomInfo').textContent='Oda kodun: '+room+' · Arkadaşına gönder';if(poll)clearInterval(poll);poll=setInterval(sync,1200);}
- catch(e){$('#roomInfo').textContent=e.message;}
-});
-$('#join').addEventListener('click',async()=>{
- try{room=$('#room').value.trim().toUpperCase();if(!room)throw Error('Önce oda kodunu yaz.');const j=await api('join',{room});onlineSeat='b';if(!game.load(j.fen))throw Error('Oda tahtası okunamadı.');selected=null;legal=[];render();$('#roomInfo').textContent='Odaya bağlandın: '+room;if(poll)clearInterval(poll);poll=setInterval(sync,1200);}
- catch(e){$('#roomInfo').textContent=e.message;}
-});
-render();
-window.addEventListener('error',e=>{if(e.filename&&/satranc|chess-engine/.test(e.filename))status.textContent='Satranç hatası: '+e.message;});
+$('#color').addEventListener('change',e=>{human=e.target.value;flipped=human==='b';reset();render()});
+$('#new').addEventListener('click',()=>{sound('click');reset()});
+$('#undo').addEventListener('click',()=>{if(busy)return;let n=mode==='ai'&&game.history().length>1?2:1;while(n--&&game.undo()){}selected=null;legal=[];render();speak('Biraz geri sardık. Yeni planın ne?')});
+$('#flip').addEventListener('click',()=>{flipped=!flipped;render();sound('click')});
+$('#back').addEventListener('click',()=>{if(window.parent!==window)window.parent.postMessage({type:'katia-chess-exit'},location.origin);else location.href='/'});
+$('#create').addEventListener('click',async()=>{try{const x=await api('create');room=x.room;onlineSeat='w';$('#roomInfo').textContent='Oda kodun: '+room+' · Arkadaşına gönder';if(poll)clearInterval(poll);poll=setInterval(sync,1200)}catch(e){$('#roomInfo').textContent=e.message}});
+$('#join').addEventListener('click',async()=>{try{room=$('#room').value.trim().toUpperCase();if(!room)throw Error('Önce oda kodunu yaz.');const x=await api('join',{room});onlineSeat='b';if(!game.load(x.fen))throw Error('Oda tahtası okunamadı.');selected=null;legal=[];render();$('#roomInfo').textContent='Odaya bağlandın: '+room;if(poll)clearInterval(poll);poll=setInterval(sync,1200)}catch(e){$('#roomInfo').textContent=e.message}});
+$('#speakToggle').addEventListener('click',()=>{speechOn=!speechOn;$('#speakToggle').textContent=speechOn?'🔊':'🔇';if(!speechOn&&'speechSynthesis'in window)speechSynthesis.cancel();else speak(lastLine||pick(lines.hello))});
+$('#sayAgain').addEventListener('click',()=>speak(lastLine||pick(lines.hello)));
+render();speak(pick(lines.hello));window.addEventListener('error',e=>{if(e.filename&&/satranc|chess-engine/.test(e.filename))status.textContent='Satranç hatası: '+e.message});
 })();
