@@ -271,17 +271,19 @@ const chessQueue = new Map();
 app.post('/api/chess/quick-match',(req,res)=>{
   const player=String(req.body.player||'').slice(0,48);
   if(!/^[a-zA-Z0-9-]{8,48}$/.test(player))return res.status(400).json({error:'Oyuncu kimliği geçersiz.'});
+  const own=chessQueue.get(player);
+  if(own&&own.status==='matched')return res.json({status:'matched',room:own.room,seat:own.seat,fen:own.fen});
   for(const [id,item] of chessQueue){
-    if(id!==player && Date.now()-item.at<90000){
-      chessQueue.delete(id);
+    if(id!==player && item.status==='waiting' && Date.now()-item.at<90000){
       let code;do{code=roomCode()}while(chessRooms.has(code));
       const fen='rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1';
       chessRooms.set(code,{fen,history:[],players:2,updated:Date.now()});
-      chessQueue.delete(player);
+      chessQueue.set(id,{status:'matched',room:code,seat:'w',fen,at:Date.now()});
+      chessQueue.set(player,{status:'matched',room:code,seat:'b',fen,at:Date.now()});
       return res.json({status:'matched',room:code,seat:'b',fen});
     }
   }
-  chessQueue.set(player,{at:Date.now()});
+  if(!own)chessQueue.set(player,{status:'waiting',at:Date.now()});
   res.json({status:'waiting'});
 });
 app.post('/api/chess/quick-cancel',(req,res)=>{
@@ -289,5 +291,4 @@ app.post('/api/chess/quick-cancel',(req,res)=>{
   res.json({ok:true});
 });
 setInterval(()=>{for(const [id,item] of chessQueue)if(Date.now()-item.at>90000)chessQueue.delete(id)},30000).unref();
-
 app.listen(process.env.PORT || 3000, () => console.log('Katia çalışıyor'));
