@@ -12,3 +12,4 @@
 @media(max-width:760px){.wrap{padding:10px}.play-layout{grid-template-columns:1fr;gap:14px}.board-shell{max-width:min(100%,560px)}.side-panel{grid-template-columns:1fr 1fr}.coach-card,.moves-card{grid-column:span 2}.mode-tabs{margin:12px 0}.brand h1{font-size:18px}.status{font-size:12px}.sq{font-size:clamp(28px,9vw,54px)}}
 @media(max-width:420px){.side-panel{grid-template-columns:1fr}.coach-card,.moves-card{grid-column:auto}.topbar{gap:8px}.back{padding:8px;font-size:12px}.brand small{font-size:10px}.board-actions button{padding:9px 5px;font-size:12px}}
 [hidden]{display:none!important}
+.voice-status{display:block;color:#9bbdb4;font-size:11px;margin-top:7px}.coach-card .say-again{margin-right:12px}
