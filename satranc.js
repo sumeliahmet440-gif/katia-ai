@@ -63,9 +63,24 @@ $('#new').addEventListener('click',()=>{sound('click');reset()});
 $('#undo').addEventListener('click',()=>{if(busy)return;let n=mode==='ai'&&game.history().length>1?2:1;while(n--&&game.undo()){}selected=null;legal=[];render();speak('Biraz geri sardık. Yeni planın ne?')});
 $('#flip').addEventListener('click',()=>{flipped=!flipped;render();sound('click')});
 $('#back').addEventListener('click',()=>{if(window.parent!==window)window.parent.postMessage({type:'katia-chess-exit'},location.origin);else location.href='/'});
+
+let matchPlayer='',matchTimer=null;
+async function quickMatch(){try{if(!matchPlayer)matchPlayer=(crypto.randomUUID?crypto.randomUUID():String(Date.now())+Math.random()).slice(0,48);$('#quickMatch').disabled=true;$('#cancelMatch').hidden=false;$('#quickStatus').textContent='Rakip aranıyor…';const x=await api('quick-match',{player:matchPlayer});if(x.status==='matched'){room=x.room;onlineSeat=x.seat;$('#quickStatus').textContent='Rakip bulundu! Oyun başlıyor.';if(!game.load(x.fen))throw Error('Eşleşme tahtası yüklenemedi.');selected=null;legal=[];render();if(poll)clearInterval(poll);poll=setInterval(sync,1000);if(matchTimer)clearInterval(matchTimer);$('#cancelMatch').hidden=true;$('#quickMatch').disabled=false;return}$('#quickStatus').textContent='Rakip bekleniyor…';matchTimer=setTimeout(quickMatch,1800)}catch(e){$('#quickStatus').textContent=e.message;$('#quickMatch').disabled=false;$('#cancelMatch').hidden=true}}
+async function cancelQuickMatch(){if(matchTimer)clearTimeout(matchTimer);matchTimer=null;try{if(matchPlayer)await api('quick-cancel',{player:matchPlayer})}catch(e){}$('#quickStatus').textContent='Eşleşme araması durduruldu.';$('#quickMatch').disabled=false;$('#cancelMatch').hidden=true}
+$('#quickMatch').addEventListener('click',quickMatch);
+$('#cancelMatch').addEventListener('click',cancelQuickMatch);
+
 $('#create').addEventListener('click',async()=>{try{const x=await api('create');room=x.room;onlineSeat='w';$('#roomInfo').textContent='Oda kodun: '+room+' · Arkadaşına gönder';if(poll)clearInterval(poll);poll=setInterval(sync,1200)}catch(e){$('#roomInfo').textContent=e.message}});
 $('#join').addEventListener('click',async()=>{try{room=$('#room').value.trim().toUpperCase();if(!room)throw Error('Önce oda kodunu yaz.');const x=await api('join',{room});onlineSeat='b';if(!game.load(x.fen))throw Error('Oda tahtası okunamadı.');selected=null;legal=[];render();$('#roomInfo').textContent='Odaya bağlandın: '+room;if(poll)clearInterval(poll);poll=setInterval(sync,1200)}catch(e){$('#roomInfo').textContent=e.message}});
 $('#voiceChoice').addEventListener('change',()=>speak(lastLine||pick(lines.hello)));if('speechSynthesis'in window){loadVoices();speechSynthesis.addEventListener('voiceschanged',loadVoices)}$('#speakToggle').addEventListener('click',()=>{speechOn=!speechOn;$('#speakToggle').textContent=speechOn?'🔊':'🔇';if(!speechOn){speechToken++;if(activeAudio){activeAudio.pause();activeAudio=null}if('speechSynthesis'in window)speechSynthesis.cancel();$('#voiceStatus').textContent='Ses kapalı'}else speak(lastLine||pick(lines.hello))});
 $('#sayAgain').addEventListener('click',()=>speak(lastLine||pick(lines.hello)));
-render();speak(pick(lines.hello));window.addEventListener('error',e=>{if(e.filename&&/satranc|chess-engine/.test(e.filename))status.textContent='Satranç hatası: '+e.message});
+render();speak(pick(lines.hello));
+// Kısa, adım adım satranç dersleri
+const lessons=[["Taşlar nasıl hareket eder?","Her taşın kendine özgü bir hareketi vardır. Piyon ileri bir kare gider, ilk hamlesinde isterse iki kare ilerleyebilir. Taşları çapraz alır."],["Kale ve fil","Kale yatay ve dikey ilerler. Fil çapraz gider. Bu iki taş açık hatlarda çok güçlenir."],["At ve vezir","At L şeklinde hareket eder ve taşların üzerinden atlayabilir. Vezir hem kale hem fil gibi hareket eder."],["Şah ve şah mat","Şah her yöne bir kare gider. Şah tehdit altındaysa şah çekilmiştir. Kaçış yoksa oyun şah mat olur."],["Açılışta iyi plan","Merkezi kontrol et, atlarını ve fillerini geliştir, şahını rok yaparak güvene al. Veziri çok erken dışarı çıkarma."]];
+let lessonIndex=0;
+function showLesson(){const l=lessons[lessonIndex];$('#learnTitle').textContent=l[0];$('#learnText').textContent=l[1];$('#learnProgress').textContent='Ders '+(lessonIndex+1)+' / '+lessons.length;$('#learnFill').style.width=((lessonIndex+1)/lessons.length*100)+'%';$('#learnPrev').disabled=lessonIndex===0;$('#learnNext').textContent=lessonIndex===lessons.length-1?'Baştan başla →':'Sonraki ders →'}
+$('#learnPrev').addEventListener('click',()=>{lessonIndex=Math.max(0,lessonIndex-1);showLesson()});
+$('#learnNext').addEventListener('click',()=>{lessonIndex=lessonIndex===lessons.length-1?0:lessonIndex+1;showLesson()});
+showLesson();
+window.addEventListener('error',e=>{if(e.filename&&/satranc|chess-engine/.test(e.filename))status.textContent='Satranç hatası: '+e.message});
 })();
