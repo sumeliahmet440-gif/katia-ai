@@ -201,6 +201,43 @@ app.get('/healthz', (_req, res) => res.send('ok'));
 app.get('/api/durum', (_req, res) => { const k = groqKey(); res.json({ groq: !!k, uzunluk: k.length, gsk: k.startsWith('gsk_'), ...core.info() }); });
 
 
+
+/* Katia için sunucu taraflı doğal Türkçe seslendirme. Anahtar tarayıcıya gönderilmez. */
+app.post('/api/chess/voice', async (req, res) => {
+  try {
+    if (!guard(req, res, 25)) return;
+    const key = String(process.env.ELEVENLABS_API_KEY || '').trim();
+    const voiceId = String(process.env.ELEVENLABS_VOICE_ID || '').trim();
+    if (!key || !voiceId) return res.status(503).json({ error: 'Doğal ses henüz ayarlanmadı. Render ortamına ELEVENLABS_API_KEY ve ELEVENLABS_VOICE_ID eklenmeli.' });
+    const text = String((req.body || {}).text || '').trim().slice(0, 500);
+    if (!text) return res.status(400).json({ error: 'Seslendirilecek metin yok.' });
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 25000);
+    const upstream = await fetch('https://api.elevenlabs.io/v1/text-to-speech/' + encodeURIComponent(voiceId), {
+      method: 'POST',
+      headers: { 'xi-api-key': key, 'Content-Type': 'application/json', 'Accept': 'audio/mpeg' },
+      body: JSON.stringify({
+        text,
+        model_id: 'eleven_multilingual_v2',
+        voice_settings: { stability: 0.42, similarity_boost: 0.78, style: 0.22, use_speaker_boost: true }
+      }),
+      signal: controller.signal
+    });
+    clearTimeout(timeout);
+    if (!upstream.ok) {
+      const detail = await upstream.text();
+      console.error('ElevenLabs TTS error:', upstream.status, detail.slice(0, 400));
+      return res.status(502).json({ error: 'Ses servisi şu anda yanıt veremedi.' });
+    }
+    const audio = Buffer.from(await upstream.arrayBuffer());
+    if (!audio.length || audio.length > 8 * 1024 * 1024) return res.status(502).json({ error: 'Ses dosyası geçersiz.' });
+    res.set({ 'Content-Type': 'audio/mpeg', 'Cache-Control': 'no-store', 'Content-Length': String(audio.length) });
+    res.send(audio);
+  } catch (e) {
+    res.status(502).json({ error: 'Doğal ses oluşturulamadı.' });
+  }
+});
+
 /* Basit çevrim içi satranç odaları: tek Render instance belleğinde tutulur. */
 const chessRooms = new Map();
 const roomCode = () => Math.random().toString(36).slice(2,8).toUpperCase();
