@@ -38,3 +38,54 @@
 
 /* Katia refined visual theme */
 body{background:radial-gradient(ellipse at 12% 0%,#24514c 0,transparent 38%),radial-gradient(ellipse at 100% 12%,#283b5a 0,transparent 32%),#0b151c}.wrap{max-width:1240px;padding:22px}.topbar{padding:12px 15px;background:#12232bdb;border:1px solid #29444d;border-radius:20px;box-shadow:0 12px 35px #0003}.brand-mark{background:linear-gradient(145deg,#6bf0c3,#00a982);box-shadow:0 6px 18px #00c99a40}.play-layout{gap:28px}.opponent,.coach-card,.settings-card,.moves-card,.online-card,.learn-card{box-shadow:0 14px 30px #0002}.opponent{background:linear-gradient(120deg,#1d3d42,#1a2e3b);border-color:#42645f}#board{border:9px solid #e9dfc3;border-radius:17px;box-shadow:0 9px 0 #8d7954,0 22px 42px #0008}.sq.light{background:#f1e8d3}.sq.dark{background:#72b98b}.sq{transition:filter .12s}.sq:hover{filter:brightness(1.08)}.coach-card{background:linear-gradient(145deg,#1c4942,#172b35);border-color:#39776b}.settings-card,.moves-card,.online-card{background:linear-gradient(145deg,#1a3039,#14252e)}.cheat-panel{box-shadow:0 10px 25px #0003;border-style:solid;border-color:#c69b47}button:disabled{opacity:.42!important;cursor:not-allowed!important;transform:none!important;filter:none!important}@media(max-width:760px){.wrap{padding:11px}.play-layout{gap:15px}.topbar{border-radius:15px;padding:10px}}
+
+
+/* Katia premium polish — layered depth, warm board frame, refined controls */
+:root{--mint:#65edc1;--gold:#f4cc75;--glass:rgba(20,39,47,.82)}
+body{background:radial-gradient(ellipse at 8% 8%,rgba(45,125,105,.28),transparent 34%),radial-gradient(ellipse at 92% 18%,rgba(70,92,143,.24),transparent 32%),linear-gradient(145deg,#09151b 0%,#10242b 48%,#0b1921 100%);background-attachment:fixed}
+.wrap{max-width:1320px;padding:clamp(12px,2.2vw,30px)}
+.topbar{position:relative;isolation:isolate;backdrop-filter:blur(16px);background:linear-gradient(110deg,rgba(23,48,55,.94),rgba(15,34,43,.88));border:1px solid rgba(128,190,177,.22);border-radius:22px;padding:13px 17px;box-shadow:0 14px 38px rgba(0,0,0,.22),inset 0 1px rgba(255,255,255,.06)}
+.brand-mark{width:48px;height:48px;border-radius:16px;background:linear-gradient(145deg,#8af4d1,#14b98e 70%,#087d6a);color:#06372d;box-shadow:0 7px 22px rgba(36,221,172,.25);font-size:27px}
+.brand h1{letter-spacing:-.6px;font-size:23px}.brand small{letter-spacing:.15px}
+.status{padding:8px 12px;border-radius:999px;background:rgba(65,205,160,.1);border:1px solid rgba(101,237,193,.2)}
+.mode-tabs{gap:10px;padding:5px;border-radius:18px;background:rgba(10,25,31,.52);border:1px solid rgba(132,177,173,.12)}
+.mode-tabs button{min-height:45px;border-radius:13px;background:transparent;border-color:transparent;color:#b9ceca;transition:background .2s,transform .2s,color .2s,box-shadow .2s}
+.mode-tabs button:hover{background:rgba(255,255,255,.06);color:#fff;transform:translateY(-1px)}
+.mode-tabs button.active{background:linear-gradient(135deg,#80f0c9,#28c99b);color:#07372d;border-color:rgba(255,255,255,.22);box-shadow:0 5px 16px rgba(27,202,153,.2),inset 0 1px rgba(255,255,255,.4)}
+.play-layout{grid-template-columns:minmax(300px,680px) minmax(275px,1fr);gap:clamp(16px,2.4vw,32px)}
+.opponent{padding:12px 16px;border-radius:19px;background:linear-gradient(105deg,rgba(31,67,68,.95),rgba(25,43,57,.96));border-color:rgba(117,205,178,.25);box-shadow:0 9px 24px rgba(0,0,0,.16)}
+.mini-mascot{filter:drop-shadow(0 5px 5px rgba(0,0,0,.2));transform:scale(1.04)}
+.opponent-info strong{letter-spacing:.15px}.opponent-info small{color:#b1cbc5}
+.board-shell{max-width:680px;padding-left:23px;padding-bottom:24px}
+#board{border:10px solid #d7bd8b;border-radius:17px;background:#d7bd8b;box-shadow:0 5px 0 #9c8050,0 9px 0 #725b3c,0 22px 42px rgba(0,0,0,.42),0 0 0 1px rgba(255,255,255,.18);isolation:isolate}
+.sq.light{background:linear-gradient(145deg,#f6edd8,#e9ddc0)}
+.sq.dark{background:linear-gradient(145deg,#8acb99,#65ad80)}
+.sq:hover{filter:brightness(1.08) saturate(1.05)}
+.sq.sel{background:#f6d65c!important;box-shadow:inset 0 0 0 4px #e8a62c, inset 0 0 18px rgba(255,255,255,.32)}
+.sq.target:after{width:22%;height:22%;background:#155d45bb;box-shadow:0 1px 4px #fff8}
+.sq.capture:after{border-width:5px;border-color:#e85e61;box-shadow:inset 0 0 12px rgba(232,94,97,.16)}
+.board-coords{color:#e9d7ac;text-shadow:0 1px 3px #0008;font-size:12px}
+.board-actions{gap:10px;margin-top:19px}
+.board-actions button,.back,.online-card button,.learn-actions button,.academy-footer button{border-radius:13px;min-height:43px;transition:transform .16s,filter .16s,box-shadow .16s}
+.board-actions button:hover:not(:disabled),.back:hover,.online-card button:hover:not(:disabled){transform:translateY(-2px);filter:brightness(1.1)}
+.board-actions .new-game{background:linear-gradient(135deg,#7af0c6,#21c697);border-color:#6ce8bd;color:#06382e;box-shadow:0 5px 0 #087e62,0 8px 18px rgba(0,201,154,.15)}
+.side-panel{gap:15px}
+.coach-card,.settings-card,.moves-card,.online-card,.learn-card{border-radius:20px;padding:17px;background:linear-gradient(145deg,rgba(29,52,61,.96),rgba(17,35,44,.96));border:1px solid rgba(135,180,174,.18);box-shadow:0 12px 28px rgba(0,0,0,.17),inset 0 1px rgba(255,255,255,.035)}
+.coach-card{background:linear-gradient(145deg,#1c4942,#172b35 80%);border-color:rgba(101,237,193,.3)}
+.coach-heading strong,.settings-card h3,.moves-card h3,.online-card h3,.learn-head h3{letter-spacing:.1px}
+.coach-star{filter:drop-shadow(0 0 8px rgba(255,206,92,.35))}
+.coach-card p{font-size:15px;line-height:1.65;color:#f2faf6}
+.coach-heading button{width:36px;height:36px;background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.1)}
+.say-again{padding:8px 0}
+.settings-card label{padding:7px 0;border-bottom:1px solid rgba(155,190,184,.09)}
+.settings-card label:last-child{border:0}
+.settings-card select,.online-card input,.online-card button{border-radius:11px}
+.settings-card select:focus-visible,.online-card input:focus-visible,button:focus-visible{outline:2px solid #75e9c2;outline-offset:2px}
+.learn-card{background:linear-gradient(145deg,#203e47,#162c35);border-color:rgba(110,201,177,.3)}
+.learn-track,.academy-progress{background:#314b50}
+.learn-track span,.academy-progress span{background:linear-gradient(90deg,#65edc1,#19b98e)}
+.cheat-panel{border-radius:18px;background:linear-gradient(145deg,#352e20,#26271f);border:1px solid rgba(244,204,117,.55);box-shadow:0 14px 30px rgba(0,0,0,.2)}
+.cheat-controls select,.cheat-controls button{border-radius:11px;min-height:40px}
+@media(max-width:760px){.wrap{padding:12px}.topbar{border-radius:17px}.mode-tabs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}.mode-tabs button{font-size:13px;min-height:42px}.play-layout{grid-template-columns:minmax(0,1fr);gap:16px}.board-shell{max-width:min(100%,620px)}.side-panel{gap:11px}.coach-card,.learn-card{grid-column:1/-1}}
+@media(max-width:420px){.wrap{padding:9px}.topbar{padding:10px}.brand h1{font-size:18px}.brand-mark{width:40px;height:40px}.status{font-size:11px;padding:6px 8px}.board-shell{padding-left:19px;padding-bottom:21px}#board{border-width:7px;border-radius:13px}.board-actions{gap:6px}.board-actions button{font-size:12px;padding:8px 5px}}
+@media(prefers-reduced-motion:no-preference){.brand-mark{animation:katiaGlow 4s ease-in-out infinite alternate}@keyframes katiaGlow{from{box-shadow:0 5px 16px rgba(36,221,172,.16)}to{box-shadow:0 7px 25px rgba(36,221,172,.36)}}}
